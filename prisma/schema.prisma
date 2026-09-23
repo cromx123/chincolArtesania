@@ -1,0 +1,145 @@
+// Base de datos de Chincol Artesanías.
+// Hoy: SQLite (un archivo, sin instalar nada). Para pasar a Postgres/Supabase
+// basta con cambiar `provider` y `DATABASE_URL`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  name          String
+  category      String
+  description   String   @default("")
+  price         Int // CLP
+  stock         Int      @default(0)
+  lowStockAlert Int      @default(2)
+  madeToOrder   Boolean  @default(false)
+  /// JSON: ids de colores de cuero que el cliente puede elegir
+  leatherColors String   @default("[]")
+  /// JSON: ids de colores de hilo
+  threadColors  String   @default("[]")
+  engraving     Boolean  @default(false)
+  /// JSON: rutas de fotos, la primera es la principal
+  images        String   @default("[]")
+  measures      String?
+  materialsText String?
+  care          String?
+  featured      Boolean  @default(false)
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  recipe    RecipeItem[]
+  saleItems SaleItem[]
+}
+
+/// Materiales (insumos) del taller: cueros, hilos, herrajes, acabados.
+model Material {
+  id        String   @id @default(cuid())
+  name      String
+  kind      String // cuero | hilo | herraje | acabado | otro
+  unit      String // pie2 | m | u | l
+  stock     Float    @default(0)
+  minStock  Float    @default(0)
+  unitCost  Int      @default(0) // CLP por unidad
+  supplier  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipe    RecipeItem[]
+  movements MaterialMovement[]
+}
+
+/// Cuánto material usa cada unidad de un producto.
+model RecipeItem {
+  id         String   @id @default(cuid())
+  productId  String
+  materialId String
+  quantity   Float
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, materialId])
+}
+
+/// Historial de entradas y salidas de materiales.
+model MaterialMovement {
+  id         String   @id @default(cuid())
+  materialId String
+  delta      Float
+  reason     String // compra | fabricacion | venta | ajuste
+  note       String?
+  productId  String?
+  saleId     String?
+  createdAt  DateTime @default(now())
+  material   Material @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  sale       Sale?    @relation(fields: [saleId], references: [id], onDelete: SetNull)
+
+  @@index([materialId, createdAt])
+}
+
+model Sale {
+  id            String   @id @default(cuid())
+  soldAt        DateTime @default(now())
+  channel       String // instagram | whatsapp | taller | feria | web | otro
+  /// Nombre de la feria (solo cuando channel = feria). Los resúmenes agrupan todas como "Feria".
+  fairName      String?
+  payment       String // transferencia | efectivo | tarjeta
+  paid          Boolean  @default(true)
+  customer      String?
+  note          String?
+  total         Int
+  discountStock Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  items     SaleItem[]
+  movements MaterialMovement[]
+
+  @@index([soldAt])
+}
+
+model SaleItem {
+  id          String   @id @default(cuid())
+  saleId      String
+  productId   String?
+  productName String
+  unitPrice   Int
+  quantity    Int
+  /// Descuento en pesos sobre la línea (total = unitPrice × quantity − discount)
+  discount    Int      @default(0)
+  /// Unidades que salieron del stock de productos terminados
+  fromStock   Int      @default(0)
+  sale        Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+}
+
+/// Conversaciones de Asistencia (IA para ella: publicaciones, ferias, respuestas, descripciones).
+model AssistantConversation {
+  id           String   @id @default(cuid())
+  task         String // publicacion | feria | respuesta | descripcion
+  title        String
+  /// JSON: historial completo en formato de la API de Claude (texto, herramientas y razonamiento)
+  messages     String   @default("[]")
+  /// JSON, solo postulaciones a ferias: [{ id, text, status: "listo" | "falta", note }]
+  requirements String?
+  fairName     String?
+  /// Fecha de cierre tal como la dicen las bases (texto libre)
+  fairDeadline String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([updatedAt])
+}
+
+/// Ajustes simples clave/valor (ej. valor de la hora para la calculadora).
+model Setting {
+  key   String @id
+  value String
+}

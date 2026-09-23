@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
+.env
+
+# Configuración personal de Claude Code
+.claude/settings.local.json
+
+# Base de datos local y fotos subidas desde el administrador
+prisma/*.db
+prisma/*.db-journal
+data/uploads/
