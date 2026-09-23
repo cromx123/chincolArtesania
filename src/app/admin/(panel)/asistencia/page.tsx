@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
+import { META_WEBHOOK_PATH, metaStatus } from "@/config/meta";
+import { MetaBotCard } from "@/components/admin/assistant/MetaBotCard";
 import { ASSISTANT_TASKS, taskInfo } from "@/domain/assistant";
 import { dayLabel } from "@/lib/dates";
 import { assistantService, isAssistantConfigured } from "@/server/assistant/assistant-service";
@@ -11,6 +14,10 @@ export const metadata: Metadata = { title: "Asistencia" };
 
 export default async function AssistantHome() {
   const conversations = await assistantService.list();
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "tu-dominio.cl";
+  const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
+  const webhookUrl = `${proto}://${host}${META_WEBHOOK_PATH}`;
 
   return (
     <div className="a-page">
@@ -39,6 +46,8 @@ export default async function AssistantHome() {
           ))}
         </div>
       </section>
+
+      <MetaBotCard status={metaStatus()} webhookUrl={webhookUrl} />
 
       {conversations.length > 0 && (
         <section className="a-card a-card--flush">
