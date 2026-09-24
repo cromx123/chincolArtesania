@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { instagramUrl, site, whatsappLink } from "@/config/site";
 import { ChincolBird } from "../icons";
+import { NewsletterForm } from "./NewsletterForm";
 
 export function SiteFooter() {
   const ig = instagramUrl();
@@ -13,6 +14,7 @@ export function SiteFooter() {
             {site.fullName}
           </span>
           <p>{site.tagline}</p>
+          <NewsletterForm />
         </div>
         <div className="site-footer__cols">
           <div>

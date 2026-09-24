@@ -97,12 +97,16 @@ model Sale {
   note          String?
   total         Int
   discountStock Boolean  @default(true)
+  /// Clienta registrada (si se eligió al registrar la venta). Sirve para sus descuentos.
+  customerId    String?
   createdAt     DateTime @default(now())
 
   items     SaleItem[]
   movements MaterialMovement[]
+  client    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
   @@index([soldAt])
+  @@index([customerId])
 }
 
 model SaleItem {
@@ -142,4 +146,99 @@ model AssistantConversation {
 model Setting {
   key   String @id
   value String
+}
+
+/// Correos suscritos al newsletter desde el pie de la tienda.
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+/// Ferias y eventos del calendario. Fechas como "2026-10-04" (día en Chile, sin hora).
+model FairEvent {
+  id        String   @id @default(cuid())
+  name      String
+  kind      String // feria | evento
+  startDate String
+  endDate   String?
+  place     String?
+  /// Último día para postular (si la feria pide postulación)
+  applyBy   String?
+  status    String   @default("por-postular") // por-postular | postulada | confirmada | descartada
+  /// Valor del stand o inscripción, en CLP
+  cost      Int      @default(0)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([startDate])
+  @@index([applyBy])
+}
+
+/// Códigos de promoción que el cliente escribe en el carrito.
+model PromoCode {
+  id        String   @id @default(cuid())
+  /// En mayúsculas y sin espacios, ej. "CHINCOL10"
+  code      String   @unique
+  kind      String // porcentaje | monto
+  /// Porcentaje (1–90) o pesos, según `kind`
+  value     Int
+  /// Compra mínima para usarlo, en CLP (0 = sin mínimo)
+  minTotal  Int      @default(0)
+  /// Último día válido ("2026-12-31"); vacío = no vence
+  expiresOn String?
+  active    Boolean  @default(true)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Clientas que dejaron sus datos en /formulario (con consentimiento).
+model Customer {
+  id         String   @id @default(cuid())
+  name       String
+  /// Solo dígitos, formato internacional sin "+", ej. "56912345678"
+  phone      String   @unique
+  email      String?
+  comuna     String?
+  /// De dónde llegó: "feria:<id del evento>", "instagram", etc.
+  source     String?
+  newsletter Boolean  @default(false)
+  consentAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  devices CustomerDevice[]
+  sales   Sale[]
+}
+
+/// Cada celular o computador donde la clienta guardó sus datos (para reconocerla en el carrito).
+model CustomerDevice {
+  token      String   @id
+  customerId String
+  createdAt  DateTime @default(now())
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+/// Visitas al formulario que terminaron (guardando o no). Sin datos personales: solo el origen.
+model FormVisit {
+  id        String   @id @default(cuid())
+  source    String?
+  saved     Boolean
+  createdAt DateTime @default(now())
+
+  @@index([source])
+}
+
+/// Descuentos automáticos para clientas registradas.
+model LoyaltyRule {
+  id        String   @id @default(cuid())
+  kind      String // antiguedad (meses desde la primera compra) | piezas (piezas compradas)
+  threshold Int
+  percent   Int
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }

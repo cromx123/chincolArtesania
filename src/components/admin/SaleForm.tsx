@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { formatPhone } from "@/domain/customer";
 import { CHANNELS, type Channel, PAYMENTS, type Payment, isChannel, isPayment, lineTotal, saleTotal } from "@/domain/sale";
 import type { CategoryId } from "@/domain/product";
 import { formatPrice } from "@/lib/format";
@@ -39,12 +40,25 @@ function normalize(t: string) {
   return t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
-export function SaleForm({ products, today, fairNames }: { products: SellableProduct[]; today: string; fairNames: string[] }) {
+export type PickableCustomer = { id: string; name: string; phone: string };
+
+export function SaleForm({
+  products,
+  today,
+  fairNames,
+  customers = [],
+}: {
+  products: SellableProduct[];
+  today: string;
+  fairNames: string[];
+  customers?: PickableCustomer[];
+}) {
   const [channel, setChannel] = useState<Channel>("instagram");
   const [fairName, setFairName] = useState("");
   const [payment, setPayment] = useState<Payment>("transferencia");
   const [lines, setLines] = useState<Line[]>([]);
   const [customer, setCustomer] = useState("");
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [otherDay, setOtherDay] = useState(false);
   const [date, setDate] = useState(today);
   const [discountStock, setDiscountStock] = useState(true);
@@ -67,6 +81,13 @@ export function SaleForm({ products, today, fairNames }: { products: SellablePro
   const total = saleTotal(lines);
   const discountSum = lines.reduce((n, l) => n + l.discount, 0);
   const pieces = lines.reduce((n, l) => n + l.quantity, 0);
+
+  const customerMatches = useMemo(() => {
+    const q = normalize(customer.trim());
+    const digits = customer.replace(/\D/g, "");
+    if (customerId || q.length < 2) return [];
+    return customers.filter((c) => normalize(c.name).includes(q) || (digits.length >= 3 && c.phone.includes(digits))).slice(0, 5);
+  }, [customers, customer, customerId]);
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
@@ -108,6 +129,7 @@ export function SaleForm({ products, today, fairNames }: { products: SellablePro
         fairName: channel === "feria" ? fairName : undefined,
         payment,
         customer,
+        customerId: customerId ?? undefined,
         date: otherDay ? date : undefined,
         discountStock,
         lines: lines.map(({ productId, quantity, unitPrice, discount }) => ({ productId, quantity, unitPrice, discount })),
@@ -130,6 +152,7 @@ export function SaleForm({ products, today, fairNames }: { products: SellablePro
   function reset() {
     setLines([]);
     setCustomer("");
+    setCustomerId(null);
     setOtherDay(false);
     setDate(today);
     setDone(null);
@@ -298,11 +321,40 @@ export function SaleForm({ products, today, fairNames }: { products: SellablePro
         <input
           id="cliente"
           className="a-input"
-          placeholder="Nombre o @usuario de Instagram"
+          placeholder={customers.length ? "Busca una clienta registrada o escribe un nombre" : "Nombre o @usuario de Instagram"}
           value={customer}
-          onChange={(e) => setCustomer(e.target.value)}
+          onChange={(e) => {
+            setCustomer(e.target.value);
+            setCustomerId(null);
+          }}
           autoComplete="off"
         />
+        {customerId && (
+          <p className="a-hint a-customer-picked">
+            <span className="a-pill a-pill--ok">Clienta registrada</span> Esta compra cuenta para sus descuentos.
+            <button type="button" className="a-link-btn" onClick={() => setCustomerId(null)}>
+              Quitar
+            </button>
+          </p>
+        )}
+        {customerMatches.length > 0 && (
+          <ul className="a-customer-matches" aria-label="Clientas registradas">
+            {customerMatches.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomer(c.name);
+                    setCustomerId(c.id);
+                  }}
+                >
+                  <strong>{c.name}</strong>
+                  <span className="a-muted">{formatPhone(c.phone)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="a-field">

@@ -1,0 +1,20 @@
+# Dependencias y compilados: se generan dentro de la imagen
+node_modules
+.next
+out
+*.tsbuildinfo
+
+# Secretos: se pasan al contenedor con env_file, nunca dentro de la imagen
+.env
+.env*.local
+
+# Datos locales (base y fotos): viven en el volumen del contenedor
+prisma/*.db
+prisma/*.db-journal
+data/uploads
+
+.git
+.claude
+Dockerfile
+docker-compose.yml
+*.md

@@ -17,6 +17,11 @@ fi
 
 MODE="${1:-dev}"
 
+if [ "$MODE" = "docker" ]; then
+  # Construye la imagen y levanta el contenedor en segundo plano (puerto APP_PORT, 3000 por defecto).
+  exec docker compose --env-file .env.local up -d --build
+fi
+
 case "$MODE" in
   prod)
     npm run build

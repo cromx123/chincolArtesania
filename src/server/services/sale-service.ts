@@ -65,6 +65,8 @@ export const saleService = {
       fairName = known.find((n) => n.toLowerCase() === fairName!.toLowerCase()) ?? fairName;
     }
 
+    const client = input.customerId ? await db.customer.findUnique({ where: { id: input.customerId }, select: { id: true, name: true } }) : null;
+
     const total = saleTotal(lines);
     const sale = await db.$transaction(async (tx) => {
       const created = await tx.sale.create({
@@ -74,7 +76,8 @@ export const saleService = {
           fairName,
           payment: input.payment,
           paid: input.payment !== "pendiente",
-          customer: input.customer?.trim() || null,
+          customer: input.customer?.trim() || client?.name || null,
+          customerId: client?.id ?? null,
           note: input.note?.trim() || null,
           total,
           discountStock: input.discountStock,
@@ -155,6 +158,11 @@ export const saleService = {
   },
 
   /** Ferias donde ya vendió, la más reciente primero (para elegirlas con un toque). */
+  async byCustomer(customerId: string): Promise<SaleSummary[]> {
+    const rows = await db.sale.findMany({ where: { customerId }, include, orderBy: { soldAt: "desc" } });
+    return rows.map(toSummary);
+  },
+
   async recentFairNames(limit = 6): Promise<string[]> {
     const rows = await db.sale.findMany({
       where: { channel: "feria", fairName: { not: null } },

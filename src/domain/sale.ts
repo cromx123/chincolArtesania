@@ -58,6 +58,8 @@ export interface SaleInput {
   fairName?: string;
   payment: Payment;
   customer?: string;
+  /** Clienta registrada en /formulario (cuenta para sus descuentos). */
+  customerId?: string;
   note?: string;
   /** Fecha AAAA-MM-DD; vacío = hoy. */
   date?: string;

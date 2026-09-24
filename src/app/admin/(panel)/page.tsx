@@ -4,12 +4,12 @@ import { formatPrice } from "@/lib/format";
 import { greeting, monthName } from "@/lib/dates";
 import { getDashboard } from "@/server/services/dashboard-service";
 import { SaleRow, saleTitle } from "@/components/admin/SaleRow";
-import { AlertIcon, ArrowRightIcon, BoxIcon, CalculatorIcon, CartIcon, ChatIcon, PlusIcon, TagIcon } from "@/components/icons";
+import { AlertIcon, ArrowRightIcon, BoxIcon, CalculatorIcon, CalendarIcon, CartIcon, ChatIcon, PlusIcon, TagIcon } from "@/components/icons";
 
 export default async function AdminHome() {
   const d = await getDashboard();
   const pendingTotal = d.pending.reduce((s, x) => s + x.total, 0);
-  const todo = d.lowProducts.length + d.lowMaterials.length + d.pending.length;
+  const todo = d.lowProducts.length + d.lowMaterials.length + d.pending.length + d.closing.length;
 
   return (
     <div className="a-page">
@@ -56,8 +56,18 @@ export default async function AdminHome() {
             "Todo en orden"
           )}
         </h2>
-        {todo === 0 && <p className="a-muted">No hay piezas por acabarse, materiales bajos ni cobros pendientes.</p>}
+        {todo === 0 && <p className="a-muted">No hay piezas por acabarse, materiales bajos, cobros pendientes ni postulaciones por cerrar.</p>}
         <ul className="a-todo">
+          {d.closing.map((e) => (
+            <li key={`feria-${e.id}`}>
+              <Link href={`/admin/calendario/${e.id}`}>
+                <span className={`a-dot ${e.daysLeft <= 2 ? "a-dot--bad" : "a-dot--warn"}`} />
+                <span>
+                  {e.daysLeft === 0 ? "Hoy cierra" : e.daysLeft === 1 ? "Mañana cierra" : `En ${e.daysLeft} días cierra`} la postulación a {e.name}
+                </span>
+              </Link>
+            </li>
+          ))}
           {d.pending.map((s) => (
             <li key={s.id}>
               <Link href={`/admin/ventas/${s.id}`}>
@@ -121,6 +131,9 @@ export default async function AdminHome() {
         </Link>
         <Link href="/admin/ventas" className="a-shortcut">
           <TagIcon /> Ver ventas del mes
+        </Link>
+        <Link href="/admin/calendario" className="a-shortcut">
+          <CalendarIcon /> Calendario de ferias
         </Link>
         <Link href="/admin/asistencia" className="a-shortcut">
           <ChatIcon /> Ayuda para escribir (publicaciones, ferias)

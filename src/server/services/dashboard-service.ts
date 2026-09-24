@@ -1,6 +1,8 @@
 import "server-only";
 import { needsRestock } from "@/domain/material";
-import { currentMonth } from "@/lib/dates";
+import { daysBetween } from "@/domain/event";
+import { currentMonth, todayISO } from "@/lib/dates";
+import { eventService } from "./event-service";
 import { materialService } from "./material-service";
 import { productAdminService } from "./product-admin-service";
 import { saleService } from "./sale-service";
@@ -8,12 +10,15 @@ import { saleService } from "./sale-service";
 /** Lo que ve al entrar: cuánto vendió y qué necesita atención. */
 export async function getDashboard() {
   const month = currentMonth();
-  const [sales, pending, products, materials, recent] = await Promise.all([
+  const today = todayISO();
+  const inAWeek = todayISO(new Date(Date.now() + 7 * 86_400_000));
+  const [sales, pending, products, materials, recent, closing] = await Promise.all([
     saleService.byMonth(month),
     saleService.pending(),
     productAdminService.list(),
     materialService.list(),
     saleService.recent(4),
+    eventService.closingSoon(today, inAWeek),
   ]);
 
   const lowProducts = products.filter((p) => p.published && !p.madeToOrder && p.stock <= p.lowStockAlert);
@@ -28,5 +33,6 @@ export async function getDashboard() {
     lowProducts,
     lowMaterials,
     recent,
+    closing: closing.map((e) => ({ id: e.id, name: e.name, daysLeft: daysBetween(today, e.applyBy!) })),
   };
 }

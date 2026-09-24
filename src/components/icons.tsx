@@ -181,6 +181,29 @@ export const PlusIcon = ({ size = 18, className }: IconProps) => (
   </svg>
 );
 
+export const CalendarIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...stroke(size, className)}>
+    <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
+    <path d="M3.5 10h17M8 3v4M16 3v4" />
+  </svg>
+);
+
+export const PercentIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...stroke(size, className)}>
+    <path d="M19 5 5 19" />
+    <circle cx="7" cy="7" r="2.5" />
+    <circle cx="17" cy="17" r="2.5" />
+  </svg>
+);
+
+export const UsersIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...stroke(size, className)}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5" />
+    <path d="M15.5 4.8a3.5 3.5 0 0 1 0 6.4M18 14.8c2 .7 3.2 2.5 3.5 5.2" />
+  </svg>
+);
+
 export const TagIcon = ({ size = 20, className }: IconProps) => (
   <svg {...stroke(size, className)}>
     <path d="M12.4 3.5H20v7.6l-8.6 8.6a2 2 0 0 1-2.8 0l-4.8-4.8a2 2 0 0 1 0-2.8z" />

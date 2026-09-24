@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BoxIcon, CalculatorIcon, CartIcon, ChatIcon, GridIcon, PlusIcon, TagIcon } from "../icons";
+import { BoxIcon, CalculatorIcon, CalendarIcon, CartIcon, ChatIcon, GridIcon, PercentIcon, PlusIcon, TagIcon, UsersIcon } from "../icons";
 
 const LINKS = [
   { href: "/admin", label: "Inicio", icon: GridIcon },
@@ -10,6 +10,9 @@ const LINKS = [
   { href: "/admin/productos", label: "Productos", icon: CartIcon },
   { href: "/admin/materiales", label: "Materiales", icon: BoxIcon },
   { href: "/admin/calculadora", label: "Calcular precio", icon: CalculatorIcon },
+  { href: "/admin/calendario", label: "Calendario", icon: CalendarIcon },
+  { href: "/admin/promociones", label: "Promociones", icon: PercentIcon },
+  { href: "/admin/clientas", label: "Clientas", icon: UsersIcon },
   { href: "/admin/asistencia", label: "Asistencia", icon: ChatIcon },
 ];
 

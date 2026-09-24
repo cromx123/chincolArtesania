@@ -1,0 +1,26 @@
+# Uso: docker compose --env-file .env.local up -d --build
+# (el --env-file entrega los datos de contacto NEXT_PUBLIC_* al compilar)
+services:
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_WHATSAPP: ${NEXT_PUBLIC_WHATSAPP:-}
+        NEXT_PUBLIC_INSTAGRAM: ${NEXT_PUBLIC_INSTAGRAM:-}
+        NEXT_PUBLIC_EMAIL: ${NEXT_PUBLIC_EMAIL:-}
+        NEXT_PUBLIC_ADDRESS: ${NEXT_PUBLIC_ADDRESS:-}
+        NEXT_PUBLIC_HOURS: ${NEXT_PUBLIC_HOURS:-}
+    image: chincol-artesanias
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    env_file: .env.local
+    environment:
+      # Dentro del contenedor la base vive en el volumen, no en ./prisma
+      DATABASE_URL: file:/app/data/db/chincol.db
+      SEED_DEMO: ${SEED_DEMO:-0}
+    volumes:
+      - chincol-data:/app/data
+
+volumes:
+  chincol-data:

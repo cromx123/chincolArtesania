@@ -136,3 +136,18 @@ Faltan mejoras de seguimiento, más automatización y expansión del módulo de 
 ## Nota importante
 
 La configuración de Prisma en esta versión ya no se define dentro de `package.json`, sino en `prisma.config.ts`, para evitar la advertencia de deprecación de Prisma 6.
+
+## Docker
+
+La imagen incluye la tienda y el administrador. La base SQLite y las fotos subidas se guardan en el volumen `chincol-data` (montado en `/app/data`), así que no se pierden al reconstruir o reiniciar.
+
+```bash
+cp .env.example .env.local   # completa ADMIN_PASSWORD y lo demás
+./start.sh docker            # = docker compose --env-file .env.local up -d --build
+```
+
+- Queda en `http://localhost:3000`. Para otro puerto: `APP_PORT=8080 ./start.sh docker`.
+- Los datos de contacto (`NEXT_PUBLIC_*`) se incrustan al compilar: si los cambias, vuelve a correr `./start.sh docker`.
+- Las tablas se crean o actualizan solas al arrancar. Si un cambio de esquema fuera a borrar datos, el contenedor se detiene y lo muestra en `docker compose logs`.
+- Productos y materiales de ejemplo en una base vacía: `SEED_DEMO=1 ./start.sh docker`.
+- Respaldo de la base: `docker compose cp app:/app/data/db/chincol.db ./respaldo.db`.
