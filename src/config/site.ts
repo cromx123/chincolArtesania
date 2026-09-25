@@ -7,7 +7,7 @@ function env(value: string | undefined): string | null {
 
 export const site = {
   name: "Chincol",
-  fullName: "Chincol Artesanías",
+  fullName: "Chincol Artesanía",
   tagline: "Marroquinería hecha a mano. Piezas propias y encargos personalizados.",
   whatsapp: env(process.env.NEXT_PUBLIC_WHATSAPP),
   instagram: env(process.env.NEXT_PUBLIC_INSTAGRAM),

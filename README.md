@@ -1,6 +1,6 @@
-# Chincol Artesanías
+# Chincol Artesanía
 
-Tienda web y panel administrativo para Chincol Artesanías, creada con Next.js + Prisma + SQLite. El proyecto funciona como catálogo online para vender productos artesanales, con gestión de stock, ventas y costos.
+Tienda web y panel administrativo para Chincol Artesanía, creada con Next.js + Prisma + SQLite. El proyecto funciona como catálogo online para vender productos artesanales, con gestión de stock, ventas y costos.
 
 ## Stack
 

@@ -127,7 +127,7 @@ export function CustomerForm({ source, fairName }: { source: string | null; fair
       <div className="signup__consent">
         <label className="check">
           <input type="checkbox" checked={form.consent} onChange={(e) => set("consent", e.target.checked)} aria-invalid={errors.consent ? true : undefined} />
-          Autorizo a Chincol Artesanías a guardar estos datos para mis pedidos y beneficios.
+          Autorizo a Chincol Artesanía a guardar estos datos para mis pedidos y beneficios.
         </label>
         <p className="muted">
           Solo los usamos para atenderte y darte descuentos; no los compartimos con nadie. Puedes pedir que los borremos cuando quieras escribiéndonos por WhatsApp.

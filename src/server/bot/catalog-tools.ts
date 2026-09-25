@@ -25,7 +25,7 @@ export const catalogTools = [
   {
     name: "buscar_productos",
     description:
-      "Busca piezas en el catálogo de Chincol Artesanías. Úsala cuando el cliente pregunte qué hay, por una categoría, por stock o por precio.",
+      "Busca piezas en el catálogo de Chincol Artesanía. Úsala cuando el cliente pregunte qué hay, por una categoría, por stock o por precio.",
     input_schema: {
       type: "object",
       properties: {

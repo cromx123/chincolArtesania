@@ -38,9 +38,9 @@ export const newsletterCampaignService = {
       const { user, transporter } = gmailTransport();
       const subscriber = await db.newsletterSubscriber.findUnique({ where: { email: recipient }, select: { unsubscribeToken: true } });
       const unsubscribeUrl = subscriber ? `${newsletterBaseUrl()}/newsletter/unsubscribe/${subscriber.unsubscribeToken}` : null;
-      const text = [body, input.promoText?.trim(), input.ctaLabel?.trim() && input.ctaUrl?.trim() ? `${input.ctaLabel.trim()}: ${input.ctaUrl.trim()}` : null, `Chincol Artesanías · ${newsletterBaseUrl()}`, process.env.NEXT_PUBLIC_EMAIL?.trim() ? `Contacto: ${process.env.NEXT_PUBLIC_EMAIL.trim()}` : null, unsubscribeUrl ? `Darte de baja: ${unsubscribeUrl}` : "Correo de prueba del newsletter."].filter(Boolean).join("\n\n");
+      const text = [body, input.promoText?.trim(), input.ctaLabel?.trim() && input.ctaUrl?.trim() ? `${input.ctaLabel.trim()}: ${input.ctaUrl.trim()}` : null, `Chincol Artesanía · ${newsletterBaseUrl()}`, process.env.NEXT_PUBLIC_EMAIL?.trim() ? `Contacto: ${process.env.NEXT_PUBLIC_EMAIL.trim()}` : null, unsubscribeUrl ? `Darte de baja: ${unsubscribeUrl}` : "Correo de prueba del newsletter."].filter(Boolean).join("\n\n");
       await transporter.sendMail({
-        from: { name: process.env.NEWSLETTER_FROM_NAME?.trim() || "Chincol Artesanías", address: user },
+        from: { name: process.env.NEWSLETTER_FROM_NAME?.trim() || "Chincol Artesanía", address: user },
         to: recipient,
         subject: `[Prueba] ${subject}`,
         text,

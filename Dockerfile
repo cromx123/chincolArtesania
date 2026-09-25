@@ -1,4 +1,4 @@
-# Chincol Artesanías: Next.js (standalone) + Prisma + SQLite.
+# Chincol Artesanía: Next.js (standalone) + Prisma + SQLite.
 # La base y las fotos subidas viven en /app/data (montar un volumen ahí).
 
 FROM node:22-bookworm-slim AS base

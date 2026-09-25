@@ -1,4 +1,4 @@
-// Base de datos de Chincol Artesanías.
+// Base de datos de Chincol Artesanía.
 // Hoy: SQLite (un archivo, sin instalar nada). Para pasar a Postgres/Supabase
 // basta con cambiar `provider` y `DATABASE_URL`.
 

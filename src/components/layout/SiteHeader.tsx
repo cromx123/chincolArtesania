@@ -31,7 +31,7 @@ export function Logo() {
       </span>
       <span className="logo__text">
         <span className="logo__name">{site.name}</span>
-        <span className="logo__sub">Artesanías</span>
+        <span className="logo__sub">Artesanía</span>
       </span>
     </Link>
   );
