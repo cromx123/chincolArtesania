@@ -315,7 +315,8 @@ legend { padding: 0; }
 .hero__social { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 14px; color: var(--muted); }
 .hero__social svg { color: var(--accent); flex-shrink: 0; }
 .hero__social strong { font-weight: 600; color: var(--ink); }
-.hero__media { border-left: 1px solid var(--line-3); min-height: 320px; }
+.hero__media { position: relative; overflow: hidden; border-left: 1px solid var(--line-3); min-height: 320px; background: var(--sand); }
+.hero__image { object-fit: cover; object-position: center 54%; }
 
 .category-chips { display: none; }
 
@@ -360,7 +361,7 @@ legend { padding: 0; }
 }
 @media (max-width: 719px) {
   .hero { grid-template-columns: 1fr; min-height: 0; }
-  .hero__media { display: none; }
+  .hero__media { display: block; min-height: 0; height: clamp(240px, 62vw, 380px); border-left: 0; border-bottom: 1px solid var(--line-3); }
   .hero__copy { background: var(--sand); border-bottom: 1px solid var(--line-3); padding: 32px var(--gutter) 24px; gap: 12px; min-height: 296px; justify-content: flex-end; overflow: hidden; }
   .hero__watermark { width: 132px; height: 132px; top: 18px; right: 14px; bottom: auto; color: #cdb99f; }
   .hero .eyebrow { font-size: 11px; color: #7a5334; }

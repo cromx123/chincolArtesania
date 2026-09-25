@@ -150,9 +150,13 @@ model Setting {
 
 /// Correos suscritos al newsletter desde el pie de la tienda.
 model NewsletterSubscriber {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  email          String   @unique
+  status         String   @default("suscrito") // suscrito | dado-de-baja
+  subscribedAt   DateTime @default(now())
+  unsubscribedAt DateTime?
+  unsubscribeToken String @unique @default(cuid())
+  createdAt      DateTime @default(now())
 }
 
 /// Borradores y envíos programados del newsletter.
@@ -160,6 +164,10 @@ model NewsletterCampaign {
   id          String   @id @default(cuid())
   subject     String
   body        String
+  productsText String?
+  promoText   String?
+  ctaLabel    String?
+  ctaUrl      String?
   scheduledAt DateTime?
   status      String   @default("borrador") // borrador | programada | enviada | error
   sentAt      DateTime?

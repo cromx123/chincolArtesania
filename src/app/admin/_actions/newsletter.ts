@@ -18,7 +18,7 @@ export async function deleteCampaignAction(id: string) {
   return result;
 }
 
-export async function sendTestNewsletterAction(input: { subject: string; body: string; recipient: string }) {
+export async function sendTestNewsletterAction(input: { subject: string; body: string; productsText?: string; promoText?: string; ctaLabel?: string; ctaUrl?: string; recipient: string }) {
   await requireAdmin();
   return newsletterCampaignService.sendTest(input);
 }

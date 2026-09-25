@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { instagramUrl, site, whatsappLink } from "@/config/site";
 import { catalogService } from "@/server/container";
 import { ProductGrid } from "@/components/ProductCard";
-import { ArrowRightIcon, BirdsOrnament, ChincolBird, InstagramIcon, PencilIcon, ShieldIcon, StarIcon, CategoryGlyph } from "@/components/icons";
+import { ArrowRightIcon, BirdsOrnament, ChincolBird, InstagramIcon, PencilIcon, ShieldIcon, StarIcon } from "@/components/icons";
 
 const STEPS = [
   { n: "01", title: "Envías la idea", text: "Foto de referencia, medidas y uso." },
@@ -39,10 +40,8 @@ export default async function HomePage() {
             </a>
           )}
         </div>
-        <div className="hero__media product-image" role="img" aria-label="Foto principal del taller (pendiente)">
-          <span className="product-image__placeholder">
-            <CategoryGlyph category="bolsos" size={76} />
-          </span>
+        <div className="hero__media">
+          <Image src="/images/main.jpg" alt="Bolso de cuero Chincol pintado a mano con una ballena" fill priority sizes="(max-width: 720px) 100vw, 52vw" className="hero__image" />
         </div>
       </section>
 
