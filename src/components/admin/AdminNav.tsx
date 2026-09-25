@@ -13,6 +13,7 @@ const LINKS = [
   { href: "/admin/calendario", label: "Calendario", icon: CalendarIcon },
   { href: "/admin/promociones", label: "Promociones", icon: PercentIcon },
   { href: "/admin/clientas", label: "Clientas", icon: UsersIcon },
+  { href: "/admin/newsletter", label: "Newsletter", icon: ChatIcon },
   { href: "/admin/asistencia", label: "Asistencia", icon: ChatIcon },
 ];
 
