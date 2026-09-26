@@ -49,6 +49,14 @@ function friendlyError(e: unknown): string {
   return "En este momento no puedo responder. Escríbenos directo y te ayudamos.";
 }
 
+/** El widget, WhatsApp e Instagram muestran texto plano: se quitan negritas y títulos de Markdown. */
+function plainText(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/^#{1,6}\s+/gm, "");
+}
+
 function lastReplyText(messages: MessageParam[]): string {
   for (let i = messages.length - 1; i >= 0; i--) {
     const m = messages[i];
@@ -58,7 +66,7 @@ function lastReplyText(messages: MessageParam[]): string {
       .map((b) => b.text)
       .join("\n")
       .trim();
-    if (text) return text;
+    if (text) return plainText(text);
   }
   return "No tengo una respuesta para eso. ¿Puedes contarme un poco más?";
 }
@@ -124,8 +132,7 @@ export const botService = {
           // Si un filtro de seguridad rechaza por error, la API reintenta con otro modelo.
           betas: ["server-side-fallback-2026-07-01"],
           fallbacks: "default",
-          thinking: { type: "adaptive" },
-          output_config: { effort: "medium" },
+          // Haiku 4.5 no admite thinking adaptativo ni effort: no agregarlos aquí.
           cache_control: { type: "ephemeral" },
           system: customerSystemPrompt(todayText()),
           tools: botToolSchemas() as Anthropic.Beta.BetaTool[],
