@@ -155,7 +155,7 @@ model NewsletterSubscriber {
   status         String   @default("suscrito") // suscrito | dado-de-baja
   subscribedAt   DateTime @default(now())
   unsubscribedAt DateTime?
-  unsubscribeToken String @unique @default(cuid())
+  unsubscribeToken String? @unique @default(cuid())
   createdAt      DateTime @default(now())
 }
 
@@ -185,6 +185,9 @@ model FairEvent {
   kind      String // feria | evento
   startDate String
   endDate   String?
+  /// Horario, "10:00" (opcional)
+  startTime String?
+  endTime   String?
   place     String?
   /// Último día para postular (si la feria pide postulación)
   applyBy   String?

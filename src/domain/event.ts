@@ -20,6 +20,8 @@ export interface FairEvent {
   kind: EventKind;
   startDate: string;
   endDate: string | null;
+  startTime: string | null;
+  endTime: string | null;
   place: string | null;
   applyBy: string | null;
   status: EventStatus;
@@ -27,8 +29,10 @@ export interface FairEvent {
   note: string | null;
 }
 
-export type EventInput = Omit<FairEvent, "id" | "endDate" | "place" | "applyBy" | "note"> & {
+export type EventInput = Omit<FairEvent, "id" | "endDate" | "startTime" | "endTime" | "place" | "applyBy" | "note"> & {
   endDate: string;
+  startTime: string;
+  endTime: string;
   place: string;
   applyBy: string;
   note: string;
@@ -41,6 +45,8 @@ export const EMPTY_EVENT: EventInput = {
   kind: "feria",
   startDate: "",
   endDate: "",
+  startTime: "",
+  endTime: "",
   place: "",
   applyBy: "",
   status: "por-postular",
@@ -58,6 +64,18 @@ export function isEventStatus(v: string): v is EventStatus {
 
 export function statusName(id: string): string {
   return EVENT_STATUSES.find((s) => s.id === id)?.name ?? id;
+}
+
+export function isTime(v: string): boolean {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+}
+
+/** "10:00 a 19:00", "desde las 10:00", "hasta las 19:00" o null si no hay horario. */
+export function formatHours(e: Pick<FairEvent, "startTime" | "endTime">): string | null {
+  if (e.startTime && e.endTime) return `${e.startTime} a ${e.endTime}`;
+  if (e.startTime) return `desde las ${e.startTime}`;
+  if (e.endTime) return `hasta las ${e.endTime}`;
+  return null;
 }
 
 export function isISODate(v: string): boolean {

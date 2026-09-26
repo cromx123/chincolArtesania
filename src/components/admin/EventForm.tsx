@@ -106,6 +106,38 @@ export function EventForm({ id, initial }: { id: string | null; initial: EventIn
           </div>
         </div>
 
+        <div className="a-grid-2">
+          <div className="a-field">
+            <label htmlFor="ev-hora-inicio" className="a-label">
+              Hora de inicio <span className="a-optional">(opcional)</span>
+            </label>
+            <input
+              id="ev-hora-inicio"
+              type="time"
+              className="a-input"
+              value={form.startTime}
+              onChange={(e) => set("startTime", e.target.value)}
+              aria-invalid={errors.startTime ? true : undefined}
+            />
+            {errors.startTime && <p className="a-error">{errors.startTime}</p>}
+          </div>
+          <div className="a-field">
+            <label htmlFor="ev-hora-fin" className="a-label">
+              Hora de término <span className="a-optional">(opcional)</span>
+            </label>
+            <input
+              id="ev-hora-fin"
+              type="time"
+              className="a-input"
+              value={form.endTime}
+              onChange={(e) => set("endTime", e.target.value)}
+              aria-invalid={errors.endTime ? true : undefined}
+            />
+            {errors.endTime && <p className="a-error">{errors.endTime}</p>}
+          </div>
+        </div>
+        {form.endDate && form.endDate !== form.startDate && (form.startTime || form.endTime) && <p className="a-hint">El mismo horario para todos los días.</p>}
+
         <div className="a-field">
           <label htmlFor="ev-lugar" className="a-label">
             Lugar <span className="a-optional">(opcional)</span>

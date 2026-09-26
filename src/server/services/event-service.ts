@@ -1,6 +1,6 @@
 import "server-only";
 import type { FairEvent as EventRow } from "@prisma/client";
-import { type EventErrors, type EventInput, type FairEvent, isEventKind, isEventStatus, isISODate } from "@/domain/event";
+import { type EventErrors, type EventInput, type FairEvent, isEventKind, isEventStatus, isISODate, isTime } from "@/domain/event";
 import { cleanFairName } from "@/domain/sale";
 import { db } from "../db";
 
@@ -13,6 +13,8 @@ function toEvent(row: EventRow): FairEvent {
     kind: isEventKind(row.kind) ? row.kind : "evento",
     startDate: row.startDate,
     endDate: row.endDate,
+    startTime: row.startTime,
+    endTime: row.endTime,
     place: row.place,
     applyBy: row.applyBy,
     status: isEventStatus(row.status) ? row.status : "por-postular",
@@ -27,6 +29,12 @@ function validate(input: EventInput): EventErrors {
   if (!isEventKind(input.kind)) errors.kind = "Elige si es feria u otro evento.";
   if (!isISODate(input.startDate)) errors.startDate = "Elige el día en que empieza.";
   if (input.endDate && (!isISODate(input.endDate) || input.endDate < input.startDate)) errors.endDate = "Tiene que ser el mismo día o después del inicio.";
+  if (input.startTime && !isTime(input.startTime)) errors.startTime = "Revisa la hora.";
+  if (input.endTime && !isTime(input.endTime)) errors.endTime = "Revisa la hora.";
+  const oneDay = !input.endDate || input.endDate === input.startDate;
+  if (!errors.startTime && !errors.endTime && oneDay && input.startTime && input.endTime && input.endTime <= input.startTime) {
+    errors.endTime = "Tiene que ser después de la hora de inicio.";
+  }
   if (input.applyBy && !isISODate(input.applyBy)) errors.applyBy = "Revisa la fecha.";
   if (!isEventStatus(input.status)) errors.status = "Elige en qué va.";
   if (!Number.isInteger(input.cost) || input.cost < 0) errors.cost = "Revisa el valor.";
@@ -95,6 +103,8 @@ export const eventService = {
       kind: input.kind,
       startDate: input.startDate,
       endDate: input.endDate && input.endDate !== input.startDate ? input.endDate : null,
+      startTime: input.startTime || null,
+      endTime: input.endTime || null,
       place: input.place.trim() || null,
       applyBy: input.applyBy || null,
       status: input.status,

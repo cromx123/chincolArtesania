@@ -13,6 +13,7 @@ import {
   normalizePhone,
   perkReason,
 } from "@/domain/customer";
+import { isComunaRM } from "@/domain/comunas";
 import { todayISO } from "@/lib/dates";
 import { db } from "../db";
 import { newsletterService } from "./newsletter-service";
@@ -84,14 +85,16 @@ export const customerService = {
     const name = input.name.replace(/\s+/g, " ").trim().slice(0, 80);
     const phone = normalizePhone(input.phone);
     const email = input.email.trim().toLowerCase().slice(0, 254);
+    const comuna = input.comuna.trim();
     if (!name) errors.name = "Escribe tu nombre.";
     if (!phone) errors.phone = "Revisa tu número (ej: 9 1234 5678).";
     if (email && !EMAIL_RE.test(email)) errors.email = "Revisa tu correo.";
     if (!input.consent) errors.consent = "Para guardar tus datos necesitamos tu autorización.";
+    if (comuna && !isComunaRM(comuna)) errors.comuna = "Elige tu comuna de la lista.";
     if (input.newsletter && !email) errors.email = "Para recibir novedades escribe tu correo.";
     if (Object.keys(errors).length) return { ok: false, errors };
 
-    const data = { name, email: email || null, comuna: input.comuna.replace(/\s+/g, " ").trim().slice(0, 60) || null, newsletter: input.newsletter };
+    const data = { name, email: email || null, comuna: comuna || null, newsletter: input.newsletter };
     const own = token ? await db.customerDevice.findUnique({ where: { token }, include: { customer: true } }) : null;
     const byPhone = await db.customer.findUnique({ where: { phone: phone! } });
 
