@@ -38,9 +38,10 @@ model Product {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  recipe        RecipeItem[]
-  saleItems     SaleItem[]
-  quoteRequests QuoteRequest[]
+  recipe           RecipeItem[]
+  saleItems        SaleItem[]
+  quoteRequests    QuoteRequest[]
+  productionOrders ProductionOrder[]
 }
 
 /// Materiales (insumos) del taller: cueros, hilos, herrajes, acabados.
@@ -247,8 +248,37 @@ model QuoteRequest {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  productionOrder ProductionOrder?
+
   @@index([status, createdAt])
   @@index([conversationId])
+}
+
+/// Encargos: piezas que hay que fabricar para alguien, con estado y fecha de entrega.
+/// La fecha es un día de Chile en texto ("2026-10-04"), igual que el calendario.
+model ProductionOrder {
+  id             String        @id @default(cuid())
+  /// Qué hay que hacer, ej: "Billetera Ñire con 2 bolsillos extra".
+  title          String
+  productId      String?
+  product        Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  quantity       Int           @default(1)
+  customerName   String?
+  /// Teléfono, correo o usuario de Instagram, en texto libre.
+  customerContact String?
+  /// Precio acordado en CLP (0 = sin definir).
+  price          Int           @default(0)
+  status         String        @default("por-empezar") // por-empezar | en-progreso | finalizado | entregado
+  dueDate        String
+  note           String?
+  /// Cotización del bot desde la que se creó (si viene de una).
+  quoteRequestId String?       @unique
+  quoteRequest   QuoteRequest? @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([dueDate])
+  @@index([status])
 }
 
 /// Códigos de promoción que el cliente escribe en el carrito.

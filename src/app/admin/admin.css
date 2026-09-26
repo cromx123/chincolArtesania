@@ -691,6 +691,9 @@ select.a-input { padding-right: 8px; }
 .a-cal__chip--descartada { background: transparent; border-color: var(--line-3); color: var(--muted); text-decoration: line-through; }
 .a-cal__chip--deadline, .a-cal__swatch.a-cal__chip--deadline { background: var(--a-warn-bg); border-color: #c98a1d; color: var(--a-warn); border-left-style: dashed; }
 .a-cal__chip--other { font-style: italic; }
+.a-cal__chip--encargo, .a-cal__swatch.a-cal__chip--encargo { background: #e3eef2; border-color: #2f5d6b; color: #2f5d6b; }
+.a-cal__chip--atrasado, .a-cal__swatch.a-cal__chip--atrasado { background: var(--a-bad-bg); border-color: var(--a-bad); color: var(--a-bad); }
+.a-cal__chip--entregado { background: transparent; border-color: var(--line-3); color: var(--muted); text-decoration: line-through; }
 .a-cal__chip:hover { filter: brightness(0.96); }
 
 .a-cal__legend { list-style: none; margin: -8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
@@ -700,7 +703,11 @@ select.a-input { padding-right: 8px; }
 .a-cal__date { width: 48px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
 .a-cal__date strong { font-family: var(--font-display); font-size: 24px; line-height: 1.1; color: var(--ink); }
 .a-cal__date--deadline strong { color: var(--a-warn); }
+.a-cal__date--encargo strong { color: #2f5d6b; }
+.a-cal__date--late strong { color: var(--a-bad); }
 .a-row.is-past { opacity: .6; }
+.a-row__main--link { color: var(--ink); }
+.a-row__main--link:hover .a-row__title { color: var(--accent); }
 
 @media (max-width: 599px) {
   .a-cal__head span { padding: 8px 2px; font-size: 11px; letter-spacing: 0; }

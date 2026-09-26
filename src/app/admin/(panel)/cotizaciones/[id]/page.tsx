@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { EstimateRange } from "@/domain/pricing";
 import { dayLabel } from "@/lib/dates";
 import { formatPrice } from "@/lib/format";
+import { orderService } from "@/server/services/order-service";
 import { quoteService } from "@/server/services/quote-service";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { QuoteStatusForm } from "@/components/admin/QuoteStatusForm";
@@ -57,6 +58,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
   if (!quote) notFound();
 
   const detail = parseDetail(quote.estimateDetail);
+  const order = await orderService.byQuote(quote.id);
 
   return (
     <div className="a-page a-page--narrow">
@@ -123,6 +125,25 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
 
       <div className="a-card">
         <QuoteStatusForm id={quote.id} status={quote.status} />
+      </div>
+
+      <div className="a-card">
+        <h2 className="a-card__title">Encargo</h2>
+        {order ? (
+          <>
+            <p className="a-hint">Ya hay un encargo creado desde esta cotización.</p>
+            <Link href={`/admin/encargos/${order.id}`} className="a-btn a-btn--ghost">
+              Ver el encargo
+            </Link>
+          </>
+        ) : (
+          <>
+            <p className="a-hint">Si el cliente confirmó, conviértela en encargo con su fecha de entrega: aparecerá en el calendario.</p>
+            <Link href={`/admin/encargos/nuevo?cotizacion=${quote.id}`} className="a-btn a-btn--primary">
+              Crear encargo
+            </Link>
+          </>
+        )}
       </div>
 
       {quote.productId && (
