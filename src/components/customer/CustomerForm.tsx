@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
+import { COMUNAS_RM, isComunaRM } from "@/domain/comunas";
 import type { CustomerFormErrors, CustomerFormInput } from "@/domain/customer";
 import { whatsappLink } from "@/config/site";
 import { registerCustomerAction, skipFormAction } from "@/app/(tienda)/_actions/customer";
@@ -24,7 +25,7 @@ export function CustomerForm({ source, fairName }: { source: string | null; fair
     const saved = loadSavedCustomer();
     if (!saved) return;
     setToken(saved.token);
-    setForm((f) => ({ ...f, name: saved.name, phone: saved.phone, email: saved.email, comuna: saved.comuna }));
+    setForm((f) => ({ ...f, name: saved.name, phone: saved.phone, email: saved.email, comuna: isComunaRM(saved.comuna) ? saved.comuna : "" }));
   }, []);
 
   const set = <K extends keyof CustomerFormInput>(key: K, value: CustomerFormInput[K]) => {
@@ -115,7 +116,22 @@ export function CustomerForm({ source, fairName }: { source: string | null; fair
           <label htmlFor="c-comuna">
             Comuna <span className="muted">(opcional)</span>
           </label>
-          <input id="c-comuna" className="input" autoComplete="address-level2" value={form.comuna} onChange={(e) => set("comuna", e.target.value)} />
+          <select
+            id="c-comuna"
+            className="input signup__select"
+            autoComplete="address-level2"
+            value={form.comuna}
+            onChange={(e) => set("comuna", e.target.value)}
+            aria-invalid={errors.comuna ? true : undefined}
+          >
+            <option value="">--</option>
+            {COMUNAS_RM.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          {errors.comuna && <p className="signup__error">{errors.comuna}</p>}
         </div>
       </div>
 

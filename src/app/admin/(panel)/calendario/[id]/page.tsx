@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { formatRange, lastDay, relativeDays } from "@/domain/event";
+import { formatHours, formatRange, lastDay, relativeDays } from "@/domain/event";
 import { formatPrice } from "@/lib/format";
 import { todayISO } from "@/lib/dates";
 import { eventService } from "@/server/services/event-service";
@@ -21,7 +21,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="a-page a-page--narrow">
-      <PageHeader title={event.name} subtitle={`${formatRange(event)} · ${when}`} back={`/admin/calendario?mes=${event.startDate.slice(0, 7)}`} />
+      <PageHeader title={event.name} subtitle={[formatRange(event), formatHours(event), when].filter(Boolean).join(" · ")} back={`/admin/calendario?mes=${event.startDate.slice(0, 7)}`} />
 
       {sales && (
         <section className="a-stats">
@@ -58,6 +58,8 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
           kind: event.kind,
           startDate: event.startDate,
           endDate: event.endDate ?? "",
+          startTime: event.startTime ?? "",
+          endTime: event.endTime ?? "",
           place: event.place ?? "",
           applyBy: event.applyBy ?? "",
           status: event.status,

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { type FairEvent, capitalize, formatDay, formatRange, lastDay, relativeDays, statusName } from "@/domain/event";
+import { type FairEvent, capitalize, formatDay, formatHours, formatRange, lastDay, relativeDays, statusName } from "@/domain/event";
 import { type ProductionOrder, isOverdue, orderStatusName } from "@/domain/production-order";
 import { currentMonth, isValidMonth, monthName, shiftMonth, todayISO } from "@/lib/dates";
 import { eventService } from "@/server/services/event-service";
@@ -146,7 +146,7 @@ export default async function CalendarPage({ searchParams }: Props) {
                               key={e.id}
                               href={`/admin/calendario/${e.id}`}
                               className={`a-cal__chip a-cal__chip--${e.status}${e.kind === "evento" ? " a-cal__chip--other" : ""}`}
-                              title={e.name}
+                              title={[e.name, formatHours(e)].filter(Boolean).join(" · ")}
                             >
                               <span className="a-cal__chip-text">{e.name}</span>
                             </Link>
@@ -214,6 +214,7 @@ export default async function CalendarPage({ searchParams }: Props) {
                     </Link>
                   );
                 }
+
                 const { date, type, event: e } = item;
                 return (
                   <Link key={`${type}-${e.id}`} href={`/admin/calendario/${e.id}`} className={`a-row${lastDay(e) < today && type === "evento" ? " is-past" : ""}`}>
@@ -226,7 +227,7 @@ export default async function CalendarPage({ searchParams }: Props) {
                       <span className="a-row__meta">
                         {type === "cierre"
                           ? `${capitalize(relativeDays(today, date))} · la feria es el ${formatDay(e.startDate, false)}`
-                          : [formatRange(e), e.place].filter(Boolean).join(" · ")}
+                          : [formatRange(e), formatHours(e), e.place].filter(Boolean).join(" · ")}
                       </span>
                     </span>
                     <span className="a-row__end">
