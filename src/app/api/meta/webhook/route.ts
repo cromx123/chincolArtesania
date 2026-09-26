@@ -1,11 +1,15 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { metaConfig } from "@/config/meta";
+import { botService } from "@/server/bot/bot-service";
+import { sendInstagramText, sendWhatsAppText } from "@/server/bot/meta-client";
+import { type MetaEvent, parseMetaEvent } from "@/server/bot/meta-parse";
 
 // Punto de entrada de Meta (WhatsApp Business e Instagram).
 // GET: Meta verifica la URL al registrar el webhook.
-// POST: Meta avisa de mensajes nuevos. Por ahora solo se validan y se registran en el log;
-// el bot que responde usará las herramientas de src/server/bot/catalog-tools.ts.
+// POST: valida la firma, saca los mensajes de texto y responde con el bot de
+// clientes (src/server/bot/bot-service.ts), que usa las mismas herramientas de
+// catálogo y cotizaciones que el widget de la tienda.
 
 export async function GET(req: NextRequest) {
   const params = req.nextUrl.searchParams;
@@ -25,8 +29,6 @@ function validSignature(raw: string, header: string | null): boolean {
   return got.length === expected.length && timingSafeEqual(Buffer.from(got), Buffer.from(expected));
 }
 
-type MetaEvent = { object?: string; entry?: { changes?: unknown[]; messaging?: unknown[] }[] };
-
 export async function POST(req: NextRequest) {
   const raw = await req.text();
   if (!validSignature(raw, req.headers.get("x-hub-signature-256"))) {
@@ -40,9 +42,20 @@ export async function POST(req: NextRequest) {
     return new NextResponse("JSON inválido", { status: 400 });
   }
 
-  const count = (event.entry ?? []).reduce((n, e) => n + (e.changes?.length ?? 0) + (e.messaging?.length ?? 0), 0);
-  console.info(`[meta] evento ${event.object ?? "desconocido"} con ${count} cambio(s)`);
+  // Meta reintenta si no recibe 200 rápido; con tráfico bajo (un taller de una
+  // persona) procesar aquí mismo es aceptable. Si el volumen crece, esto debería
+  // pasar a una cola para no arriesgar reintentos duplicados por la latencia del bot.
+  const messages = parseMetaEvent(event);
+  for (const m of messages) {
+    try {
+      const result = await botService.send({ channel: m.channel, externalId: m.externalId, text: m.text });
+      const reply = result.ok ? result.reply : result.error;
+      if (m.channel === "whatsapp") await sendWhatsAppText(m.externalId, reply);
+      else await sendInstagramText(m.externalId, reply);
+    } catch (e) {
+      console.error("[meta] error procesando mensaje:", e);
+    }
+  }
 
-  // Meta reintenta si no recibe 200 rápido: responder siempre de inmediato.
   return NextResponse.json({ ok: true });
 }

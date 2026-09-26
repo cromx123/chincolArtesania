@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { formatAmount } from "@/domain/material";
+import { orderStatusName } from "@/domain/production-order";
 import { formatPrice } from "@/lib/format";
 import { greeting, monthName } from "@/lib/dates";
 import { getDashboard } from "@/server/services/dashboard-service";
 import { SaleRow, saleTitle } from "@/components/admin/SaleRow";
-import { AlertIcon, ArrowRightIcon, BoxIcon, CalculatorIcon, CalendarIcon, CartIcon, ChatIcon, PlusIcon, TagIcon } from "@/components/icons";
+import { AlertIcon, ArrowRightIcon, BoxIcon, CalculatorIcon, CalendarIcon, CartIcon, ChatIcon, HammerIcon, PlusIcon, TagIcon } from "@/components/icons";
 
 export default async function AdminHome() {
   const d = await getDashboard();
   const pendingTotal = d.pending.reduce((s, x) => s + x.total, 0);
-  const todo = d.lowProducts.length + d.lowMaterials.length + d.pending.length + d.closing.length;
+  const todo = d.lowProducts.length + d.lowMaterials.length + d.pending.length + d.closing.length + d.ordersDue.length;
 
   return (
     <div className="a-page">
@@ -56,8 +57,25 @@ export default async function AdminHome() {
             "Todo en orden"
           )}
         </h2>
-        {todo === 0 && <p className="a-muted">No hay piezas por acabarse, materiales bajos, cobros pendientes ni postulaciones por cerrar.</p>}
+        {todo === 0 && <p className="a-muted">No hay encargos por entregar, piezas por acabarse, materiales bajos, cobros pendientes ni postulaciones por cerrar.</p>}
         <ul className="a-todo">
+          {d.ordersDue.map((o) => (
+            <li key={`encargo-${o.id}`}>
+              <Link href={`/admin/encargos/${o.id}`}>
+                <span className={`a-dot ${o.daysLeft <= 1 ? "a-dot--bad" : "a-dot--warn"}`} />
+                <span>
+                  {o.daysLeft < 0
+                    ? `Atrasado ${-o.daysLeft === 1 ? "1 día" : `${-o.daysLeft} días`}: ${o.title}`
+                    : o.daysLeft === 0
+                      ? `Hoy se entrega: ${o.title}`
+                      : o.daysLeft === 1
+                        ? `Mañana se entrega: ${o.title}`
+                        : `En ${o.daysLeft} días se entrega: ${o.title}`}{" "}
+                  <span className="a-muted">({orderStatusName(o.status).toLowerCase()})</span>
+                </span>
+              </Link>
+            </li>
+          ))}
           {d.closing.map((e) => (
             <li key={`feria-${e.id}`}>
               <Link href={`/admin/calendario/${e.id}`}>
@@ -134,6 +152,9 @@ export default async function AdminHome() {
         </Link>
         <Link href="/admin/calendario" className="a-shortcut">
           <CalendarIcon /> Calendario de ferias
+        </Link>
+        <Link href="/admin/encargos/nuevo" className="a-shortcut">
+          <HammerIcon /> Anotar un encargo
         </Link>
         <Link href="/admin/asistencia" className="a-shortcut">
           <ChatIcon /> Ayuda para escribir (publicaciones, ferias)

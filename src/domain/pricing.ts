@@ -71,6 +71,38 @@ export function marginOf(price: number, i: PricingInput): number {
   return ((netFinal - r.cost - commission) / netFinal) * 100;
 }
 
+export interface EstimateRangeInput extends Omit<PricingInput, "materialsCost" | "hours"> {
+  /** Costo de materiales de la pieza base (receta actual). */
+  baseMaterialsCost: number;
+  /** Horas base de la pieza (Product.hours o un valor por defecto). */
+  baseHours: number;
+  /** Multiplicadores sobre materiales para reflejar la variación pedida, ej: [1, 1.3]. */
+  materialsFactorRange: [number, number];
+  /** Multiplicadores sobre horas para reflejar la variación pedida, ej: [1, 1.3]. */
+  hoursFactorRange: [number, number];
+}
+
+export interface EstimateRange {
+  low: PricingResult;
+  high: PricingResult;
+}
+
+/** Rango estimado para una variación de una pieza existente: corre computePrice en los dos extremos. */
+export function estimateRange(i: EstimateRangeInput): EstimateRange {
+  const { baseMaterialsCost, baseHours, materialsFactorRange, hoursFactorRange, ...rest } = i;
+  const low = computePrice({
+    ...rest,
+    materialsCost: baseMaterialsCost * materialsFactorRange[0],
+    hours: baseHours * hoursFactorRange[0],
+  });
+  const high = computePrice({
+    ...rest,
+    materialsCost: baseMaterialsCost * materialsFactorRange[1],
+    hours: baseHours * hoursFactorRange[1],
+  });
+  return { low, high };
+}
+
 export const DEFAULT_PRICING = {
   hourRate: 6000,
   wastePct: 10,

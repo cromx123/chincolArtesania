@@ -33,11 +33,15 @@ model Product {
   care          String?
   featured      Boolean  @default(false)
   published     Boolean  @default(true)
+  /// Horas que toma hacer una unidad (calculadora de precio y bot de cotizaciones).
+  hours         Float?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  recipe    RecipeItem[]
-  saleItems SaleItem[]
+  recipe           RecipeItem[]
+  saleItems        SaleItem[]
+  quoteRequests    QuoteRequest[]
+  productionOrders ProductionOrder[]
 }
 
 /// Materiales (insumos) del taller: cueros, hilos, herrajes, acabados.
@@ -200,6 +204,84 @@ model FairEvent {
 
   @@index([startDate])
   @@index([applyBy])
+}
+
+/// Conversación del bot público (tienda web o Meta). Sin cuenta ni consentimiento.
+model BotConversation {
+  id            String   @id @default(cuid())
+  channel       String // web | whatsapp | instagram
+  /// Token de sesión (web, guardado en localStorage) o id externo de Meta (wa_id / IGSID).
+  externalId    String
+  /// JSON: historial completo en formato de la API de Claude (igual que AssistantConversation).
+  messages      String   @default("[]")
+  /// Para limitar abuso: ventana de mensajes recientes.
+  lastMessageAt DateTime @default(now())
+  messageCount  Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  quoteRequests QuoteRequest[]
+
+  @@unique([channel, externalId])
+  @@index([updatedAt])
+}
+
+/// Pedido de cotización de una variación de un producto existente, generado por el bot.
+/// La dueña confirma el precio final; el estimado nunca se muestra como definitivo.
+model QuoteRequest {
+  id             String   @id @default(cuid())
+  conversationId String?
+  conversation   BotConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  channel        String // web | whatsapp | instagram
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  /// Nombre del producto tal como se guardó (por si se borra o cambia después).
+  productName    String
+  /// Lo que pide el cliente, en sus palabras.
+  changes        String
+  estimateLow    Int
+  estimateHigh   Int
+  /// JSON: desglose del cálculo (PricingResult del mínimo y máximo), para mostrarlo en el admin.
+  estimateDetail String
+  contactName    String?
+  contactPhone   String?
+  contactEmail   String?
+  note           String?
+  status         String   @default("pendiente") // pendiente | revisada | respondida | descartada
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  productionOrder ProductionOrder?
+
+  @@index([status, createdAt])
+  @@index([conversationId])
+}
+
+/// Encargos: piezas que hay que fabricar para alguien, con estado y fecha de entrega.
+/// La fecha es un día de Chile en texto ("2026-10-04"), igual que el calendario.
+model ProductionOrder {
+  id             String        @id @default(cuid())
+  /// Qué hay que hacer, ej: "Billetera Ñire con 2 bolsillos extra".
+  title          String
+  productId      String?
+  product        Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  quantity       Int           @default(1)
+  customerName   String?
+  /// Teléfono, correo o usuario de Instagram, en texto libre.
+  customerContact String?
+  /// Precio acordado en CLP (0 = sin definir).
+  price          Int           @default(0)
+  status         String        @default("por-empezar") // por-empezar | en-progreso | finalizado | entregado
+  dueDate        String
+  note           String?
+  /// Cotización del bot desde la que se creó (si viene de una).
+  quoteRequestId String?       @unique
+  quoteRequest   QuoteRequest? @relation(fields: [quoteRequestId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([dueDate])
+  @@index([status])
 }
 
 /// Códigos de promoción que el cliente escribe en el carrito.

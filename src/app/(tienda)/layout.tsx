@@ -1,4 +1,5 @@
 import { CartProvider } from "@/components/cart/CartProvider";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { TabBar } from "@/components/layout/TabBar";
@@ -14,6 +15,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
         <main>{children}</main>
         <SiteFooter />
         <TabBar />
+        <ChatWidget />
       </div>
     </CartProvider>
   );

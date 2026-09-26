@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { type PricingInput, computePrice, marginOf } from "@/domain/pricing";
 import { formatAmount, type MaterialUnit } from "@/domain/material";
 import { formatPrice } from "@/lib/format";
-import { applyPriceAction, savePricingSettingsAction } from "@/app/admin/_actions/pricing";
+import { applyPriceAction, savePricingSettingsAction, setHoursAction } from "@/app/admin/_actions/pricing";
 import type { PricingSettings } from "@/server/services/settings-service";
 import { MoneyInput, QuantityInput } from "./inputs";
 import { Notice } from "./Notice";
@@ -15,6 +15,7 @@ export interface PricedProduct {
   name: string;
   price: number;
   materialsCost: number;
+  hours: number | null;
   lines: { name: string; quantity: number; unit: MaterialUnit; cost: number }[];
 }
 
@@ -51,16 +52,18 @@ export function PricingCalculator({ products, settings, initialProductId }: { pr
   const product = products.find((p) => p.id === productId) ?? null;
   const set = <K extends keyof PricingSettings>(k: K, v: PricingSettings[K]) => setS((x) => ({ ...x, [k]: v }));
 
-  // Las horas de cada pieza se recuerdan en este equipo.
+  // Las horas de cada pieza se guardan en el servidor; si aún no hay dato, se usa lo que
+  // quedó guardado en este equipo (piezas antiguas) o 2 horas por defecto.
   useEffect(() => {
-    setHours(loadHours()[productId] ?? 2);
-  }, [productId]);
+    setHours(product?.hours ?? loadHours()[productId] ?? 2);
+  }, [productId, product]);
 
   function changeHours(value: number) {
     setHours(value);
     try {
       localStorage.setItem(HOURS_KEY, JSON.stringify({ ...loadHours(), [productId]: value }));
     } catch {}
+    if (product) start(() => setHoursAction(product.id, value));
   }
 
   const input: PricingInput = useMemo(

@@ -18,6 +18,7 @@ export default async function CalculatorPage({ searchParams }: { searchParams: P
       name: p.name,
       price: p.price,
       materialsCost: recipeCost(p.recipe),
+      hours: p.hours,
       lines: p.recipe.map((l) => ({
         name: l.material.name,
         quantity: l.quantity,
