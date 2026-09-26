@@ -16,3 +16,9 @@ export async function applyPriceAction(productId: string, price: number) {
   await productAdminService.setPrice(productId, price);
   revalidatePath("/", "layout");
 }
+
+/** Guarda las horas que toma hacer una pieza, para que el bot cotice con el mismo dato. */
+export async function setHoursAction(productId: string, hours: number) {
+  await requireAdmin();
+  await productAdminService.setHours(productId, hours);
+}

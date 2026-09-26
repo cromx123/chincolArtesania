@@ -22,11 +22,11 @@ export function MetaBotCard({ status, webhookUrl }: Props) {
         <h2 id="meta-title" className="a-card__title">
           Bot de Meta para tus clientes
         </h2>
-        <span className="a-pill a-pill--info">Próximamente</span>
+        <span className={`a-pill ${anyConnected ? "a-pill--ok" : "a-pill--info"}`}>{anyConnected ? "Activo" : "Sin conectar"}</span>
       </div>
       <p className="a-muted">
-        Responderá solo los mensajes de WhatsApp e Instagram: stock, precios, plazos y pedidos a medida, con los mismos datos de tu tienda.
-        {anyConnected ? " La conexión con Meta ya está configurada; las respuestas automáticas vienen en la próxima etapa." : " Todavía no está conectado."}
+        Responde los mensajes de WhatsApp e Instagram: catálogo, precios, stock y cotizaciones de variaciones, con los mismos datos de tu tienda.
+        {anyConnected ? " Ya está conectado y respondiendo automáticamente." : " Completa los pasos de abajo para conectarlo."}
       </p>
 
       <ul className="a-meta__channels">

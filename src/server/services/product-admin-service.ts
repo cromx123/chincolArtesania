@@ -17,6 +17,8 @@ export interface AdminProduct extends Product {
   published: boolean;
   lowStockAlert: number;
   recipe: RecipeLine[];
+  /** Horas que toma hacer una unidad (calculadora de precio y bot de cotizaciones). */
+  hours: number | null;
 }
 
 export interface ProductInput {
@@ -51,6 +53,7 @@ function toAdminProduct(row: Prisma.ProductGetPayload<{ include: typeof include 
     published: row.published,
     lowStockAlert: row.lowStockAlert,
     recipe: row.recipe.map((r) => ({ material: toMaterial(r.material), quantity: r.quantity })),
+    hours: row.hours,
   };
 }
 
@@ -153,6 +156,12 @@ export const productAdminService = {
   async setPrice(id: string, price: number) {
     if (!(price > 0)) throw new Error("Precio inválido");
     await db.product.update({ where: { id }, data: { price: Math.round(price) } });
+  },
+
+  /** Horas que toma hacer una unidad, para que la calculadora y el bot usen el mismo dato. */
+  async setHours(id: string, hours: number) {
+    if (!(hours >= 0)) throw new Error("Horas inválidas");
+    await db.product.update({ where: { id }, data: { hours } });
   },
 
   async adjustStock(id: string, delta: number): Promise<number> {

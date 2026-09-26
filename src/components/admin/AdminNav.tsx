@@ -10,6 +10,7 @@ const LINKS = [
   { href: "/admin/productos", label: "Productos", icon: CartIcon },
   { href: "/admin/materiales", label: "Materiales", icon: BoxIcon },
   { href: "/admin/calculadora", label: "Calcular precio", icon: CalculatorIcon },
+  { href: "/admin/cotizaciones", label: "Cotizaciones", icon: ChatIcon },
   { href: "/admin/calendario", label: "Calendario", icon: CalendarIcon },
   { href: "/admin/promociones", label: "Promociones", icon: PercentIcon },
   { href: "/admin/clientas", label: "Clientas", icon: UsersIcon },
