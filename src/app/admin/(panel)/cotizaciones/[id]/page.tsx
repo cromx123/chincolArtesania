@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { type QuoteDetail, parseQuoteDetail } from "@/domain/bot-quote";
+import { type QuoteDetail, parseQuoteDetail, quoteChannelName } from "@/domain/bot-quote";
 import { MAX_VARIATION_SURCHARGE } from "@/domain/pricing";
 import { formatQuantity } from "@/domain/material";
 import { dayLabel } from "@/lib/dates";
@@ -13,10 +13,45 @@ import { QuoteStatusForm } from "@/components/admin/QuoteStatusForm";
 
 export const metadata: Metadata = { title: "Cotización" };
 
-const CHANNEL_NAME: Record<string, string> = { web: "Web", whatsapp: "WhatsApp", instagram: "Instagram" };
-
 /** El precio que vio el cliente y, si es una variación, de dónde sale. */
 function PriceCard({ detail, low, high }: { detail: QuoteDetail | null; low: number; high: number }) {
+  if (detail?.tipo === "carrito") {
+    return (
+      <div className="a-card">
+        <h2 className="a-card__title">Pedido del carrito · precios de la tienda</h2>
+        <p className="a-calc__price">{formatPrice(detail.total)}</p>
+        <p className="a-hint">Es el total que vio el cliente en su carrito. Confírmale el pedido, el despacho y el plazo.</p>
+        <ul className="a-list-plain">
+          {detail.lineas.map((l, i) => (
+            <li key={i}>
+              <span>
+                {l.cantidad} × {l.nombre}
+                {l.opciones && <span className="a-muted"> · {l.opciones}</span>}
+              </span>
+              <span>{formatPrice(l.subtotal)}</span>
+            </li>
+          ))}
+          {detail.descuento && (
+            <>
+              <li>
+                <span>Subtotal</span>
+                <span>{formatPrice(detail.subtotal)}</span>
+              </li>
+              <li>
+                <span>{detail.descuento.label}</span>
+                <span>−{formatPrice(detail.descuento.amount)}</span>
+              </li>
+            </>
+          )}
+          <li className="a-list-plain__total">
+            <span>Total</span>
+            <strong>{formatPrice(detail.total)}</strong>
+          </li>
+        </ul>
+      </div>
+    );
+  }
+
   if (detail?.tipo === "catalogo") {
     return (
       <div className="a-card">
@@ -91,13 +126,13 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
     <div className="a-page a-page--narrow">
       <PageHeader
         title={quote.productName}
-        subtitle={`${CHANNEL_NAME[quote.channel] ?? quote.channel} · ${dayLabel(quote.createdAt)}`}
+        subtitle={`${quoteChannelName(quote.channel)} · ${dayLabel(quote.createdAt)}`}
         back="/admin/cotizaciones"
       />
 
       <div className="a-card">
         <h2 className="a-card__title">Lo que pide el cliente</h2>
-        <p>{quote.changes}</p>
+        <p style={{ whiteSpace: "pre-line" }}>{quote.changes}</p>
         {quote.note && (
           <p className="a-hint">
             <strong>Nota:</strong> {quote.note}
@@ -106,7 +141,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <PriceCard detail={detail} low={quote.estimateLow} high={quote.estimateHigh} />
-      {quote.productId && detail?.tipo !== "catalogo" && (
+      {quote.productId && (detail?.tipo === "variacion" || !detail) && (
         <p className="a-hint">
           <Link href={`/admin/calculadora?producto=${quote.productId}`} className="a-link">
             Afinar el precio en la calculadora
@@ -144,19 +179,19 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="a-card">
-        <h2 className="a-card__title">Encargo</h2>
+        <h2 className="a-card__title">Producción</h2>
         {order ? (
           <>
-            <p className="a-hint">Ya hay un encargo creado desde esta cotización.</p>
-            <Link href={`/admin/encargos/${order.id}`} className="a-btn a-btn--ghost">
-              Ver el encargo
+            <p className="a-hint">Ya está agendada, con su fecha de entrega en el calendario.</p>
+            <Link href={`/admin/cotizaciones/pedido/${order.id}`} className="a-btn a-btn--ghost">
+              Ver en qué va
             </Link>
           </>
         ) : (
           <>
-            <p className="a-hint">Si el cliente confirmó, conviértela en encargo con su fecha de entrega: aparecerá en el calendario.</p>
-            <Link href={`/admin/encargos/nuevo?cotizacion=${quote.id}`} className="a-btn a-btn--primary">
-              Crear encargo
+            <p className="a-hint">Si el cliente confirmó, agéndala con su fecha de entrega: pasa a “Por hacer y entregar” y aparece en el calendario.</p>
+            <Link href={`/admin/cotizaciones/nueva?cotizacion=${quote.id}`} className="a-btn a-btn--primary">
+              Agendar
             </Link>
           </>
         )}

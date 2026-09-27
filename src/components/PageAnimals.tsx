@@ -4,12 +4,22 @@ import type { CSSProperties } from "react";
 //  ANIMALES DE FONDO DEL INICIO — para moverlos, edita solo la lista ANIMALS.
 // ============================================================================
 //
-//  Cada animal va en una sección de la página:
-//    "hero"     → bloque de arriba (título y botones)
-//    "piezas"   → "Piezas del taller"
-//    "valores"  → franja "Cortado y cosido a mano…"
-//    "encargos" → bloque oscuro "¿Buscas algo que no está en el catálogo?"
-//    "taller"   → "El taller", al final
+//  Cada animal va en una sección ("section") de una página:
+//
+//    Inicio (/):
+//    "hero"            → bloque de arriba (título y botones)
+//    "piezas"          → "Piezas del taller"
+//    "valores"         → franja "Cortado y cosido a mano…"
+//    "encargos"        → bloque oscuro "¿Buscas algo que no está en el catálogo?"
+//    "taller"          → "El taller"
+//    "contacto-inicio" → pie de página (Tienda, Contacto, newsletter), SOLO en el inicio
+//
+//    Otras páginas:
+//    "catalogo"        → Catálogo (/catalogo)
+//    "personalizados"  → Catálogo filtrado en "Personalizados" (/catalogo?tipo=personalizable)
+//    "producto"        → Ficha de un producto (/catalogo/…), sin la franja "También del taller"
+//    "carrito"         → Carrito (/carrito)
+//    "contacto"        → pie de página en TODAS las páginas menos el inicio
 //
 //  La posición se mide desde los bordes de esa sección:
 //    top / bottom / left / right → en px ("24px") o % ("40%"); usa solo los que necesites.
@@ -23,7 +33,18 @@ import type { CSSProperties } from "react";
 //  Los dibujos están en public/ilustraciones/<animal>.svg.
 
 type Animal = "chincol" | "zorro" | "pudu" | "chinchilla" | "fiu";
-type Section = "hero" | "piezas" | "valores" | "encargos" | "taller";
+export type Section =
+  | "hero"
+  | "piezas"
+  | "valores"
+  | "encargos"
+  | "taller"
+  | "contacto-inicio"
+  | "catalogo"
+  | "personalizados"
+  | "producto"
+  | "carrito"
+  | "contacto";
 
 interface Spot {
   top?: string;
@@ -43,11 +64,20 @@ interface Placement {
 }
 
 const ANIMALS: Placement[] = [
-  { animal: "chinchilla", section: "hero", desktop: { top: "30px", left: "44%", width: "118px" }, mobile: { top: "20px", left: "16px", width: "72px" } },
-  { animal: "chincol", section: "hero", desktop: { bottom: "-18px", right: "-34px", width: "250px" }, mobile: { top: "14px", right: "8px", width: "112px" } },
-  { animal: "zorro", section: "piezas", desktop: { top: "36px", left: "38%", width: "150px", flip: true }, mobile: { top: "18px", right: "12px", width: "92px", flip: true } },
-  { animal: "fiu", section: "encargos", desktop: { bottom: "-24px", right: "-10px", width: "220px" }, mobile: { bottom: "-16px", right: "-12px", width: "140px" } },
-  { animal: "pudu", section: "taller", desktop: { top: "40px", right: "10%", width: "170px" }, mobile: { top: "24px", right: "12px", width: "96px" } },
+  // ----- Inicio -----
+  { animal: "chincol", section: "hero", desktop: { bottom: "7px", right: "12px", width: "380px" }, mobile: { top: "14px", right: "8px", width: "112px" } },
+  { animal: "zorro", section: "piezas", desktop: { top: "50px", left: "2%", width: "550px", flip: false }, mobile: { top: "18px", right: "12px", width: "92px", flip: true } },
+  { animal: "fiu", section: "encargos", desktop: { bottom: "60px", right: "10%", width: "320px" }, mobile: { bottom: "-16px", right: "-12px", width: "140px" }, color: "#d6a77a" },
+  { animal: "pudu", section: "taller", desktop: { top: "30px", right: "77%", width: "200px" }, mobile: { top: "24px", right: "12px", width: "96px" }, color:"#3f2a1d" },
+  { animal: "chinchilla", section: "contacto-inicio", desktop: { bottom: "16px", right: "46%", width: "250px" }, mobile: { bottom: "12px", right: "12px", width: "110px" }, color:"#f3e4d6" },
+  
+  // ----- Otras páginas -----
+  { animal: "chinchilla", section: "catalogo", desktop: { bottom: "24px", left: "2%", width: "430px", flip: true }, mobile: { top: "14px", right: "12px", width: "90px" }, color:"#8a4b2a" },
+  //{ animal: "chincol", section: "catalogo", desktop: { bottom: "24px", left: "2%", width: "430px", flip: true }, mobile: { bottom: "16px", left: "12px", width: "110px" }, color:"#8a4b2a" },
+  { animal: "pudu", section: "personalizados", desktop: { top: "218px", right: "6%", width: "390px" }, mobile: { top: "14px", right: "12px", width: "80px" }, color:"#8a4b2a" },
+  { animal: "zorro", section: "producto", desktop: { bottom: "12px", left: "4%", width: "360px", flip: false }, mobile: { bottom: "12px", left: "12px", width: "120px", flip: true }, color:"#8a4b2a" },
+  { animal: "fiu", section: "carrito", desktop: { bottom: "24px", left: "4%", width: "430px", flip: false}, mobile: { top: "16px", right: "12px", width: "90px" }, color:"#8a4b2a" },
+  { animal: "chincol", section: "contacto", desktop: { bottom: "40px", right: "3%", width: "290px" }, mobile: { bottom: "12px", right: "12px", width: "100px" },color:"#f3e4d6" },
 ];
 
 // Proporción ancho / alto de cada dibujo, para que no se deformen.
@@ -72,11 +102,11 @@ export function PageAnimals({ section, full = false }: { section: Section; full?
   if (here.length === 0) return null;
   return (
     <div className={`page-animals${full ? " page-animals--full" : ""}`} aria-hidden>
-      {here.map((a) => {
+      {here.map((a, i) => {
         const mobile = a.mobile === undefined ? a.desktop : a.mobile;
         return (
           <span
-            key={a.animal}
+            key={`${a.animal}-${i}`}
             className={`page-animal${mobile === null ? " page-animal--desktop-only" : ""}`}
             style={
               {

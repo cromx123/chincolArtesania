@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { quoteChannelName } from "@/domain/bot-quote";
 import { capitalize, formatDay } from "@/domain/event";
 import { todayISO } from "@/lib/dates";
 import { orderService } from "@/server/services/order-service";
@@ -9,7 +10,7 @@ import { OrderForm } from "@/components/admin/OrderForm";
 import { orderMeta } from "@/components/admin/OrderRow";
 import { PageHeader } from "@/components/admin/PageHeader";
 
-export const metadata: Metadata = { title: "Encargo" };
+export const metadata: Metadata = { title: "Cotización" };
 
 export default async function EditOrderPage({ params }: { params: Promise<{ id: string }> }) {
   const order = await orderService.get((await params).id);
@@ -25,7 +26,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
       <PageHeader
         title={order.title}
         subtitle={`Entrega: ${capitalize(formatDay(order.dueDate))}${meta ? ` · ${meta}` : ""}`}
-        back="/admin/encargos"
+        back="/admin/cotizaciones"
       />
 
       <p className="a-hint">
@@ -36,7 +37,7 @@ export default async function EditOrderPage({ params }: { params: Promise<{ id: 
           <>
             {" · "}
             <Link href={`/admin/cotizaciones/${order.quoteRequestId}`} className="a-link">
-              Ver la cotización del bot
+              Ver lo que pidió el cliente ({quoteChannelName(order.quoteChannel ?? "")})
             </Link>
           </>
         )}

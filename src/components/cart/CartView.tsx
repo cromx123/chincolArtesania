@@ -1,43 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import type { CartItem } from "@/domain/cart";
-import type { LoyaltyPerk } from "@/domain/customer";
-import type { PromoRule } from "@/domain/promo";
-import { LEATHER_COLORS, THREAD_COLORS } from "@/domain/product";
+import { type AppliedDiscount, type CartItem, describeSelection, pickDiscount } from "@/domain/cart";
 import { formatPrice } from "@/lib/format";
 import { whatsappLink } from "@/config/site";
 import { TrashIcon, WhatsappIcon } from "../icons";
 import { useCart } from "./CartProvider";
 import type { SavedCustomer } from "../customer/saved-customer";
 import { useCustomerPerk } from "../customer/useCustomerPerk";
+import { CartQuoteBox } from "./CartQuoteBox";
 import { PromoBox, usePromo } from "./PromoBox";
-
-function describeSelection(item: CartItem): string {
-  const s = item.selection;
-  return [
-    s.leatherColor && `Cuero ${LEATHER_COLORS.find((c) => c.id === s.leatherColor)?.name.toLowerCase()}`,
-    s.threadColor && `hilo ${THREAD_COLORS.find((c) => c.id === s.threadColor)?.name.toLowerCase()}`,
-    s.initials && `iniciales ${s.initials}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
-
-type AppliedDiscount = { label: string; amount: number };
-
-/** El descuento que se aplica: el mayor entre el código y el de clienta (no se suman). */
-function pickDiscount(total: number, promo: PromoRule | null, promoAmount: number, perk: LoyaltyPerk | null): AppliedDiscount | null {
-  const perkAmount = perk ? Math.round((total * perk.percent) / 100) : 0;
-  if (perkAmount > 0 && perkAmount >= promoAmount) return { label: `Descuento de clienta ${perk!.percent}%`, amount: perkAmount };
-  if (promo && promoAmount > 0) return { label: `Código ${promo.code}`, amount: promoAmount };
-  return null;
-}
 
 /** El pedido se envía por WhatsApp; cuando exista pago en línea, cambia solo este paso. */
 function orderMessage(items: CartItem[], total: number, discount: AppliedDiscount | null, customer: SavedCustomer | null): string {
   const lines = items.map((i) => {
-    const sel = describeSelection(i);
+    const sel = describeSelection(i.selection);
     return `• ${i.quantity} x ${i.name}${sel ? ` (${sel})` : ""}: ${formatPrice(i.unitPrice * i.quantity)}`;
   });
   const totals = discount
@@ -80,7 +57,7 @@ export function CartView() {
               <Link href={`/catalogo/${item.slug}`} className="product-card__name">
                 {item.name}
               </Link>
-              {describeSelection(item) && <span className="muted">{describeSelection(item)}</span>}
+              {describeSelection(item.selection) && <span className="muted">{describeSelection(item.selection)}</span>}
               <span className="cart-line__unit muted">{formatPrice(item.unitPrice)} c/u</span>
             </div>
             <div className="stepper stepper--sm" aria-label={`Cantidad de ${item.name}`}>
@@ -138,6 +115,7 @@ export function CartView() {
           <WhatsappIcon size={19} />
           Enviar pedido por WhatsApp
         </a>
+        <CartQuoteBox items={items} promoCode={promo.rule?.code ?? null} customer={customer} total={total - (discount?.amount ?? 0)} />
         <Link href="/catalogo" className="btn btn--ghost">
           Seguir mirando
         </Link>

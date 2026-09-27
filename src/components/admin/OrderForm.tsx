@@ -49,7 +49,7 @@ export function OrderForm({ id, initial, products }: { id: string | null; initia
       }
       setErrors({});
       if (!id) {
-        router.push("/admin/encargos?aviso=creado");
+        router.push("/admin/cotizaciones?aviso=creada");
       } else {
         setSaved(form);
         setNotice("Cambios guardados.");
@@ -158,9 +158,9 @@ export function OrderForm({ id, initial, products }: { id: string | null; initia
 
       {id && (
         <ConfirmButton
-          label="Eliminar encargo"
+          label="Eliminar cotización"
           confirmLabel="Sí, eliminar"
-          warning="Se borra el encargo y su fecha del calendario."
+          warning="Se borra la cotización y su fecha del calendario."
           onConfirm={() => deleteOrderAction(id)}
         />
       )}
@@ -174,7 +174,7 @@ export function OrderForm({ id, initial, products }: { id: string | null; initia
         <div className="a-bar__row">
           <span className="a-muted a-small">{dirty ? "Tienes cambios sin guardar" : id ? "Todo guardado" : ""}</span>
           <button type="button" className="a-btn a-btn--primary a-btn--lg" onClick={save} disabled={pending || (!dirty && Boolean(id))}>
-            {pending ? "Guardando…" : id ? "Guardar cambios" : "Crear encargo"}
+            {pending ? "Guardando…" : id ? "Guardar cambios" : initial.quoteRequestId ? "Agendar" : "Crear cotización"}
           </button>
         </div>
       </div>

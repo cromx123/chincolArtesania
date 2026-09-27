@@ -54,6 +54,16 @@ body:has(.a-login) { background: var(--a-bg); padding-bottom: 0; font-size: 16px
 .a-side__link:hover { color: #f7f2ea; background: rgba(255, 255, 255, 0.05); }
 .a-side__link[aria-current="page"] { background: var(--a-dark-2); border-left-color: var(--gold); color: #f7f2ea; font-weight: 600; }
 .a-side__link[aria-current="page"] svg { color: var(--gold); }
+
+/* Burbujita de aviso (ej. cotizaciones nuevas) */
+.a-badge {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px;
+  background: #8a4b2a; color: #f3e4d6; font-size: 12px; font-weight: 700; line-height: 1;
+}
+.a-side__link .a-badge { margin-left: auto; }
+.a-tab__icon { position: relative; display: inline-flex; }
+.a-tab__icon .a-badge { position: absolute; top: -7px; right: -13px; min-width: 18px; height: 18px; padding: 0 5px; font-size: 11px; }
 .a-side__foot { margin-top: auto; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid #45342a; padding-top: 16px; }
 
 .a-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px; color: #f7f2ea; }
@@ -213,6 +223,11 @@ a.a-stat:hover, button.a-stat:hover { border-color: var(--line-3); color: var(--
 .a-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .a-dot--warn { background: #c98a1d; }
 .a-dot--bad { background: #b4462a; }
+.a-dot--calm { background: #b9a88f; }
+.a-todo-group { display: flex; flex-direction: column; gap: 2px; padding-bottom: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--a-line-soft); }
+.a-todo-group__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.a-todo-group__head h3 { margin: 0; font-family: var(--font-body); font-size: 15px; font-weight: 700; color: var(--ink-2); }
+.a-todo-group .a-hint { margin: 4px 0 0; }
 
 .a-rows { display: flex; flex-direction: column; }
 .a-row { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 12px 16px; border-top: 1px solid var(--a-line-soft); color: var(--ink); }

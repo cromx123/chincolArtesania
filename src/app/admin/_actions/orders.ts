@@ -24,5 +24,5 @@ export async function deleteOrderAction(id: string) {
   await requireAdmin();
   await orderService.remove(id);
   revalidatePath("/admin", "layout");
-  redirect("/admin/encargos?aviso=eliminado");
+  redirect("/admin/cotizaciones?aviso=eliminada");
 }

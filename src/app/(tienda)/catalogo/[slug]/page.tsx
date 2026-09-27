@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { formatDay } from "@/domain/event";
 import { availabilityLabel, categoryName, getAvailability } from "@/domain/product";
 import { catalogService } from "@/server/container";
+import { PageAnimals } from "@/components/PageAnimals";
 import { Price } from "@/components/product/Price";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchase } from "@/components/product/ProductPurchase";
@@ -26,6 +27,8 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <>
+      <div className="has-animals">
+      <PageAnimals section="producto" />
       <div className="container">
         <nav aria-label="Ruta" className="breadcrumb breadcrumb--product">
           <Link href="/">Inicio</Link>
@@ -85,6 +88,7 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
       </section>
+      </div>
 
       {related.length > 0 && (
         <section className="related">
