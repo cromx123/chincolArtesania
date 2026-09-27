@@ -16,6 +16,13 @@ export async function registerSaleAction(input: SaleInput) {
   return result;
 }
 
+export async function updateSaleAction(id: string, input: SaleInput) {
+  await requireAdmin();
+  const result = await saleService.update(id, input);
+  if (result.ok) refresh();
+  return result;
+}
+
 /** También sirve para "Deshacer" justo después de registrar. */
 export async function deleteSaleAction(id: string) {
   await requireAdmin();

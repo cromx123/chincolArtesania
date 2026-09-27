@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { TIME_ZONE } from "@/lib/dates";
+import { formatPrice } from "@/lib/format";
 import { db } from "../db";
 import { customerSystemPrompt } from "./prompts";
 import { botToolSchemas, executeBotTool } from "./tools";
@@ -122,7 +123,7 @@ export const botService = {
     const messages = parse<MessageParam[]>(conv.messages, []);
     messages.push({ role: "user", content: text });
 
-    const ctx: BotToolContext = { channel: input.channel, conversationId: conv.id };
+    const ctx: BotToolContext = { channel: input.channel, conversationId: conv.id, quotedPrices: [] };
 
     try {
       for (let step = 0; step < MAX_STEPS; step++) {
@@ -162,7 +163,23 @@ export const botService = {
       return { ok: false, error: friendlyError(e) };
     }
 
+    ensureQuotedPrices(messages, ctx);
     await saveConversation(conv.id, messages);
     return { ok: true, reply: lastReplyText(messages) };
   },
 };
+
+/**
+ * Si en este turno se cotizó y la respuesta no dice ese precio tal cual (el modelo lo
+ * redondeó o lo omitió), se agrega al final: el cliente debe ver el mismo número que
+ * queda guardado para la dueña. Se agrega al historial para que el bot también lo sepa.
+ */
+function ensureQuotedPrices(messages: MessageParam[], ctx: BotToolContext) {
+  const last = messages.at(-1);
+  if (!ctx.quotedPrices.length || last?.role !== "assistant" || typeof last.content === "string") return;
+  const reply = lastReplyText(messages);
+  const missing = ctx.quotedPrices.filter((q) => !reply.includes(q.price.toLocaleString("es-CL")));
+  if (!missing.length) return;
+  const lines = missing.map((q) => (q.estimate ? `Precio estimado de la cotización: ${formatPrice(q.price)} (la artesana lo confirma).` : `Precio de la cotización: ${formatPrice(q.price)}.`));
+  last.content = [...last.content, { type: "text", text: lines.join("\n") }];
+}

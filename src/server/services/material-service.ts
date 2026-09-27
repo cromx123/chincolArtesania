@@ -28,6 +28,12 @@ export interface Movement {
   createdAt: Date;
 }
 
+/** Guarda el costo en las dos columnas: redondeado en unitCost y exacto en unitCostDecimal. */
+function costFields(value: number) {
+  const exact = Math.max(0, Math.round((value || 0) * 10_000) / 10_000);
+  return { unitCost: Math.round(exact), unitCostDecimal: exact };
+}
+
 export const materialService = {
   async list(): Promise<MaterialWithUse[]> {
     const rows = await db.material.findMany({
@@ -49,7 +55,7 @@ export const materialService = {
       kind: input.kind,
       unit: input.unit,
       minStock: Math.max(0, input.minStock || 0),
-      unitCost: Math.max(0, Math.round(input.unitCost || 0)),
+      ...costFields(input.unitCost),
       supplier: input.supplier.trim() || null,
     };
     if (id) {
@@ -74,7 +80,7 @@ export const materialService = {
     await db.$transaction(async (tx) => {
       await tx.material.update({
         where: { id },
-        data: { stock: { increment: quantity }, ...(totalPaid > 0 ? { unitCost: Math.round(totalPaid / quantity) } : {}) },
+        data: { stock: { increment: quantity }, ...(totalPaid > 0 ? costFields(totalPaid / quantity) : {}) },
       });
       await tx.materialMovement.create({ data: { materialId: id, delta: quantity, reason: "compra" } });
     });

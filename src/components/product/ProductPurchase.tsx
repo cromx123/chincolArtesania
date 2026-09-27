@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { LEATHER_COLORS, type LeatherColorId, type Product, THREAD_COLORS, type ThreadColorId, isPurchasable } from "@/domain/product";
-import { formatPrice } from "@/lib/format";
+import { LEATHER_COLORS, type LeatherColorId, type Product, THREAD_COLORS, type ThreadColorId, effectivePrice, isPurchasable } from "@/domain/product";
 import { whatsappLink } from "@/config/site";
 import { useCart } from "../cart/CartProvider";
 import { WhatsappIcon } from "../icons";
+import { Price } from "./Price";
 
 /** Opciones (cuero, hilo, grabado), cantidad y botones de compra. */
 export function ProductPurchase({ product }: { product: Product }) {
@@ -36,7 +36,7 @@ export function ProductPurchase({ product }: { product: Product }) {
       productId: product.id,
       slug: product.slug,
       name: product.name,
-      unitPrice: product.price,
+      unitPrice: effectivePrice(product),
       quantity,
       selection: { leatherColor: leather, threadColor: thread, initials: initials.trim().toUpperCase() || undefined },
     });
@@ -98,7 +98,9 @@ export function ProductPurchase({ product }: { product: Product }) {
       )}
 
       <div className="purchase__bar">
-        <div className="purchase__price-mobile">{formatPrice(product.price)}</div>
+        <div className="purchase__price-mobile">
+          <Price product={product} className="purchase__price-value" />
+        </div>
         <div className="purchase__actions">
           {purchasable && (
             <div className="stepper" aria-label="Cantidad">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { type Product, categoryName, getBadge } from "@/domain/product";
-import { formatPrice } from "@/lib/format";
 import { ProductImage } from "./ProductImage";
+import { Price } from "./product/Price";
 
 export function ProductCard({ product }: { product: Product }) {
   const badge = getBadge(product);
@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
       <span className="product-card__body">
         <span className="eyebrow">{categoryName(product.category)}</span>
         <span className="product-card__name">{product.name}</span>
-        <span className="product-card__price">{formatPrice(product.price)}</span>
+        <Price product={product} className="product-card__price" />
       </span>
     </Link>
   );

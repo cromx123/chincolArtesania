@@ -8,10 +8,12 @@ import {
   type MaterialKind,
   type MaterialUnit,
   formatAmount,
+  formatQuantity,
   materialLevel,
   unitShort,
+  unitsPerYard,
 } from "@/domain/material";
-import { formatPrice } from "@/lib/format";
+import { formatPrice, formatUnitPrice } from "@/lib/format";
 import {
   deleteMaterialAction,
   purchaseMaterialAction,
@@ -21,7 +23,7 @@ import {
 import type { MaterialWithUse } from "@/server/services/material-service";
 import { GridIcon, PlusIcon, SearchIcon, TableIcon } from "../icons";
 import { ConfirmButton } from "./ConfirmButton";
-import { Choice, MoneyInput, QuantityInput } from "./inputs";
+import { Choice, MoneyInput, QuantityInput, UnitCostInput, YardsInput } from "./inputs";
 import { Notice } from "./Notice";
 import { Sheet } from "./Sheet";
 
@@ -46,18 +48,50 @@ function LevelBar({ stock, min }: { stock: number; min: number }) {
   );
 }
 
+/** Cantidad del material: los hilos en cm o m también se pueden escribir en yardas. */
+function AmountField({ id, kind, unit, value, onChange, label }: { id: string; kind: MaterialKind | null; unit: MaterialUnit | null; value: number; onChange: (v: number) => void; label: string }) {
+  const perYard = unitsPerYard(kind, unit);
+  const u = unit ? unitShort(unit) : "";
+  return perYard ? (
+    // key: al cambiar de unidad se rearma con la conversión nueva.
+    <YardsInput key={unit} id={id} label={label} value={value} onChange={onChange} unit={u} perYard={perYard} />
+  ) : (
+    <QuantityInput id={id} value={value} onChange={onChange} suffix={u} />
+  );
+}
+
+/** Costo por unidad. En cm se puede escribir por metro (o por yarda, si es hilo), porque así se compra. */
+function CostField({ id, kind, unit, value, onChange, label }: { id: string; kind: MaterialKind | null; unit: MaterialUnit | null; value: number; onChange: (v: number) => void; label: string }) {
+  const perYard = unitsPerYard(kind, unit);
+  const u = unit ? unitShort(unit) : "";
+  if (perYard) return <UnitCostInput key={unit} id={id} label={label} value={value} onChange={onChange} unit={u} other="yarda" factor={perYard} />;
+  if (unit === "cm") return <UnitCostInput key={unit} id={id} label={label} value={value} onChange={onChange} unit="cm" other="metro" factor={100} />;
+  return <MoneyInput id={id} value={value} onChange={onChange} placeholder="0" />;
+}
+
+/** "$0,55 por cm", más lo que eso da por yarda en los hilos. */
+function costText(m: Pick<MaterialWithUse, "kind" | "unit" | "unitCost">): string {
+  const perYard = unitsPerYard(m.kind, m.unit);
+  return `${formatUnitPrice(m.unitCost)} por ${unitShort(m.unit)}${perYard ? ` (${formatPrice(m.unitCost * perYard)} por yarda)` : ""}`;
+}
+
+/** "9.144 cm", más su equivalente en yardas en los hilos. */
+function amountText(m: Pick<MaterialWithUse, "kind" | "unit">, value: number): string {
+  const perYard = unitsPerYard(m.kind, m.unit);
+  return `${formatAmount(value, m.unit)}${perYard && value > 0 ? ` (${formatQuantity(value / perYard)} yd)` : ""}`;
+}
+
 function BuyForm({ m, onDone }: { m: MaterialWithUse; onDone: (msg: string) => void }) {
   const [qty, setQty] = useState(0);
   const [paid, setPaid] = useState(0);
   const [pending, start] = useTransition();
-  const unit = unitShort(m.unit);
   return (
     <div className="a-form">
       <div className="a-field">
         <label htmlFor="compra-cant" className="a-label">
           ¿Cuánto compraste?
         </label>
-        <QuantityInput id="compra-cant" value={qty} onChange={setQty} suffix={unit} autoFocus />
+        <AmountField id="compra-cant" label="Cantidad comprada" kind={m.kind} unit={m.unit} value={qty} onChange={setQty} />
       </div>
       <div className="a-field">
         <label htmlFor="compra-pago" className="a-label">
@@ -65,9 +99,7 @@ function BuyForm({ m, onDone }: { m: MaterialWithUse; onDone: (msg: string) => v
         </label>
         <MoneyInput id="compra-pago" value={paid} onChange={setPaid} placeholder="0" />
         {qty > 0 && paid > 0 && (
-          <p className="a-hint">
-            Queda en {formatPrice(Math.round(paid / qty))} por {unit}. Así tus costos quedan al día.
-          </p>
+          <p className="a-hint">Queda en {costText({ ...m, unitCost: paid / qty })}. Así tus costos quedan al día.</p>
         )}
       </div>
       <button
@@ -77,7 +109,7 @@ function BuyForm({ m, onDone }: { m: MaterialWithUse; onDone: (msg: string) => v
         onClick={() =>
           start(async () => {
             await purchaseMaterialAction(m.id, qty, paid);
-            onDone(`Sumamos ${formatAmount(qty, m.unit)} de ${m.name.toLowerCase()}.`);
+            onDone(`Sumamos ${amountText(m, qty)} de ${m.name.toLowerCase()}.`);
           })
         }
       >
@@ -97,8 +129,8 @@ function CountForm({ m, onDone }: { m: MaterialWithUse; onDone: (msg: string) =>
         <label htmlFor="contar" className="a-label">
           ¿Cuánto tienes ahora?
         </label>
-        <QuantityInput id="contar" value={value} onChange={setValue} suffix={unitShort(m.unit)} autoFocus />
-        <p className="a-hint">Antes decía {formatAmount(m.stock, m.unit)}.</p>
+        <AmountField id="contar" label="Lo que tienes ahora" kind={m.kind} unit={m.unit} value={value} onChange={setValue} />
+        <p className="a-hint">Antes decía {amountText(m, m.stock)}.</p>
       </div>
       <button
         type="button"
@@ -107,7 +139,7 @@ function CountForm({ m, onDone }: { m: MaterialWithUse; onDone: (msg: string) =>
         onClick={() =>
           start(async () => {
             await setMaterialStockAction(m.id, value);
-            onDone(`Actualizado: ${formatAmount(value, m.unit)} de ${m.name.toLowerCase()}.`);
+            onDone(`Actualizado: ${amountText(m, value)} de ${m.name.toLowerCase()}.`);
           })
         }
       >
@@ -128,6 +160,14 @@ function EditForm({ m, onDone }: { m: MaterialWithUse | null; onDone: (msg: stri
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const u = unit ? unitShort(unit) : "";
+  // Con conversor (hilo en yardas, costo por metro) los campos son anchos: van uno bajo el otro.
+  const wide = unitsPerYard(kind, unit) !== null || unit === "cm";
+
+  function chooseKind(k: MaterialKind) {
+    setKind(k);
+    // El hilo se mide en largo: en un material nuevo se propone cm (con conversor de yardas).
+    if (k === "hilo" && !m && unit === null) setUnit("cm");
+  }
 
   return (
     <div className="a-form">
@@ -139,32 +179,33 @@ function EditForm({ m, onDone }: { m: MaterialWithUse | null; onDone: (msg: stri
       </div>
       <div className="a-field">
         <span className="a-label">Tipo</span>
-        <Choice label="Tipo de material" options={MATERIAL_KINDS} value={kind} onChange={setKind} columns={3} />
+        <Choice label="Tipo de material" options={MATERIAL_KINDS} value={kind} onChange={chooseKind} columns={3} />
       </div>
       <div className="a-field">
         <span className="a-label">¿En qué lo mides?</span>
         <Choice label="Unidad de medida" options={UNIT_CHOICES} value={unit} onChange={setUnit} columns={2} />
+        {unitsPerYard(kind, unit) && <p className="a-hint">Puedes escribir el hilo en yardas o en {u}: el otro se calcula solo (1 yarda = 91,44 cm).</p>}
       </div>
       {!m && (
         <div className="a-field">
           <label htmlFor="mat-stock" className="a-label">
             ¿Cuánto tienes ahora?
           </label>
-          <QuantityInput id="mat-stock" value={stock} onChange={setStock} suffix={u} />
+          <AmountField id="mat-stock" label="Lo que tienes ahora" kind={kind} unit={unit} value={stock} onChange={setStock} />
         </div>
       )}
-      <div className="a-grid-2">
+      <div className={wide ? "a-form" : "a-grid-2"}>
         <div className="a-field">
           <label htmlFor="mat-min" className="a-label">
             Avisarme si baja de
           </label>
-          <QuantityInput id="mat-min" value={min} onChange={setMin} suffix={u} />
+          <AmountField id="mat-min" label="Aviso de stock bajo" kind={kind} unit={unit} value={min} onChange={setMin} />
         </div>
         <div className="a-field">
           <label htmlFor="mat-costo" className="a-label">
-            Costo por {u || "unidad"}
+            {wide ? "Costo" : `Costo por ${u || "unidad"}`}
           </label>
-          <MoneyInput id="mat-costo" value={cost} onChange={setCost} placeholder="0" />
+          <CostField id="mat-costo" label="Costo" kind={kind} unit={unit} value={cost} onChange={setCost} />
         </div>
       </div>
       <div className="a-field">
@@ -303,10 +344,10 @@ function MaterialsTable({ list, onMode }: { list: MaterialWithUse[]; onMode: (mo
                 <LevelBar stock={m.stock} min={m.minStock} />
               </td>
               <td className="is-num">
-                <strong>{formatAmount(m.stock, m.unit)}</strong>
+                <strong>{amountText(m, m.stock)}</strong>
               </td>
-              <td className="is-num">{m.minStock > 0 ? formatAmount(m.minStock, m.unit) : "—"}</td>
-              <td className="is-num">{m.unitCost > 0 ? `${formatPrice(m.unitCost)} / ${unitShort(m.unit)}` : "—"}</td>
+              <td className="is-num">{m.minStock > 0 ? amountText(m, m.minStock) : "—"}</td>
+              <td className="is-num">{m.unitCost > 0 ? costText(m) : "—"}</td>
               <td className="is-num">{m.unitCost > 0 ? formatPrice(Math.round(m.stock * m.unitCost)) : "—"}</td>
               <td>
                 <div className="a-table__actions">
@@ -427,13 +468,16 @@ export function MaterialsManager({ materials }: { materials: MaterialWithUse[] }
                   <span className="a-muted a-small">
                     {MATERIAL_KINDS.find((k) => k.id === m.kind)?.name}
                     {m.supplier && ` · ${m.supplier}`}
-                    {m.unitCost > 0 && ` · ${formatPrice(m.unitCost)} por ${unitShort(m.unit)}`}
+                    {m.unitCost > 0 && ` · ${costText(m)}`}
                   </span>
                 </div>
                 <span className="a-material__amount">{formatAmount(m.stock, m.unit)}</span>
               </div>
               <LevelBar stock={m.stock} min={m.minStock} />
-              {m.minStock > 0 && <span className="a-muted a-small">Te avisamos si baja de {formatAmount(m.minStock, m.unit)}</span>}
+              {unitsPerYard(m.kind, m.unit) && m.stock > 0 && (
+                <span className="a-muted a-small">Equivale a {formatQuantity(m.stock / unitsPerYard(m.kind, m.unit)!)} yardas</span>
+              )}
+              {m.minStock > 0 && <span className="a-muted a-small">Te avisamos si baja de {amountText(m, m.minStock)}</span>}
               <div className="a-material__actions">
                 <MaterialActions m={m} onMode={setMode} />
               </div>

@@ -30,7 +30,12 @@ export default async function NewOrderPage({ searchParams }: Props) {
         productId: quote.productId ?? "",
         customerName: quote.contactName ?? "",
         customerContact: quote.contactPhone ?? quote.contactEmail ?? "",
-        note: `${quote.changes}\n\nEl bot le cotizó entre ${formatPrice(quote.estimateLow)} y ${formatPrice(quote.estimateHigh)}.`,
+        note:
+          quote.estimateLow === quote.estimateHigh
+            ? `${quote.changes}\n\nEl bot le cotizó ${formatPrice(quote.estimateLow)}.`
+            : `${quote.changes}\n\nEl bot le cotizó entre ${formatPrice(quote.estimateLow)} y ${formatPrice(quote.estimateHigh)}.`,
+        // Las cotizaciones actuales tienen un solo precio: el mismo que vio el cliente.
+        price: quote.estimateLow === quote.estimateHigh ? quote.estimateLow : 0,
         quoteRequestId: quote.id,
       } satisfies Partial<OrderInput>);
     }

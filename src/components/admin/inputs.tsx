@@ -1,6 +1,7 @@
 "use client";
 
-import { type InputHTMLAttributes, useEffect, useState } from "react";
+import { Fragment, type InputHTMLAttributes, useEffect, useRef, useState } from "react";
+import { cm2ToPie2, pie2ToCm2 } from "@/domain/material";
 
 const thousands = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
 
@@ -69,6 +70,140 @@ export function QuantityInput({
       />
       {suffix && <span className="a-qty__suffix">{suffix}</span>}
     </div>
+  );
+}
+
+/** 0.25 → "0,25" con hasta `decimals` decimales (sin ceros de sobra). */
+function formatDecimal(value: number, decimals: number): string {
+  return value ? String(Number(value.toFixed(decimals))).replace(".", ",") : "";
+}
+
+const moneyText = (value: number, decimals: number) =>
+  value ? new Intl.NumberFormat("es-CL", { maximumFractionDigits: decimals }).format(value) : "";
+
+/** Plata con decimales: el punto separa miles y la coma los decimales ("5.000", "0,55"). */
+function parseMoney(text: string): number {
+  const n = Number(text.replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : 0;
+}
+
+/** Un lado del conversor: cómo se muestra y cómo se pasa a la unidad que se guarda. */
+export interface ConvertSide {
+  /** Para lectores de pantalla, ej: "en yardas". */
+  name: string;
+  suffix?: string;
+  /** Para plata: "$" delante y punto de miles. */
+  money?: boolean;
+  decimals: number;
+  fromStored: (stored: number) => number;
+  toStored: (shown: number) => number;
+}
+
+/**
+ * Dos campos conectados, como un conversor de monedas: se escribe en cualquiera y el
+ * otro se calcula solo. `value` y `onChange` van en la unidad que se guarda.
+ */
+export function ConvertInput({ id, value, onChange, label, sides }: { id: string; value: number; onChange: (stored: number) => void; label: string; sides: [ConvertSide, ConvertSide] }) {
+  const show = (side: ConvertSide, stored: number) => (side.money ? moneyText : formatDecimal)(side.fromStored(stored), side.decimals);
+  const [texts, setTexts] = useState<[string, string]>([show(sides[0], value), show(sides[1], value)]);
+  // Lo último que se avisó hacia afuera: si `value` vuelve igual, no se pisa lo que se está escribiendo.
+  const emitted = useRef(value);
+
+  useEffect(() => {
+    if (value === emitted.current) return;
+    emitted.current = value;
+    setTexts([show(sides[0], value), show(sides[1], value)]);
+    // Solo cuando `value` cambia desde afuera (ej. al cambiar de unidad).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  function type(index: 0 | 1, raw: string) {
+    const side = sides[index];
+    const other = sides[1 - index];
+    const clean = raw.replace(/[^\d.,]/g, "");
+    const stored = side.toStored(side.money ? parseMoney(clean) : parseQuantity(clean));
+    setTexts(index === 0 ? [clean, show(other, stored)] : [show(other, stored), clean]);
+    emitted.current = stored;
+    onChange(stored);
+  }
+
+  return (
+    <div className="a-area" role="group" aria-label={label}>
+      {sides.map((side, i) => (
+        <Fragment key={side.name}>
+          {i === 1 && (
+            <span className="a-area__swap" aria-hidden>
+              ⇄
+            </span>
+          )}
+          <div className={side.money ? "a-money" : "a-qty"}>
+            {side.money && <span aria-hidden>$</span>}
+            <input
+              id={i === 0 ? id : undefined}
+              inputMode="decimal"
+              autoComplete="off"
+              aria-label={`${label} ${side.name}`}
+              value={texts[i]}
+              onChange={(e) => type(i as 0 | 1, e.target.value)}
+            />
+            {side.suffix && <span className="a-qty__suffix">{side.suffix}</span>}
+          </div>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
+const same = (v: number) => v;
+
+/** Superficie en pie² ⇄ cm². `value` y `onChange` van en pie². */
+export function AreaInput({ id, value, onChange, label }: { id: string; value: number; onChange: (pie2: number) => void; label: string }) {
+  return (
+    <ConvertInput
+      id={id}
+      value={value}
+      onChange={onChange}
+      label={label}
+      sides={[
+        { name: "en pies cuadrados", suffix: "pie²", decimals: 4, fromStored: same, toStored: same },
+        { name: "en centímetros cuadrados", suffix: "cm²", decimals: 1, fromStored: pie2ToCm2, toStored: cm2ToPie2 },
+      ]}
+    />
+  );
+}
+
+/** Largo de hilo en yardas ⇄ la unidad del material (cm o m). `value` va en esa unidad. */
+export function YardsInput({ id, value, onChange, label, unit, perYard }: { id: string; value: number; onChange: (v: number) => void; label: string; unit: string; perYard: number }) {
+  return (
+    <ConvertInput
+      id={id}
+      value={value}
+      onChange={onChange}
+      label={label}
+      sides={[
+        { name: "en yardas", suffix: "yd", decimals: 2, fromStored: (v) => v / perYard, toStored: (yd) => yd * perYard },
+        { name: `en ${unit}`, suffix: unit, decimals: 2, fromStored: same, toStored: same },
+      ]}
+    />
+  );
+}
+
+/**
+ * Costo en dos precios conectados, ej: $ por yarda ⇄ $ por cm. `value` es el costo por
+ * la unidad del material; `factor` es cuántas de esas unidades hay en la otra.
+ */
+export function UnitCostInput({ id, value, onChange, label, unit, other, factor }: { id: string; value: number; onChange: (v: number) => void; label: string; unit: string; other: string; factor: number }) {
+  return (
+    <ConvertInput
+      id={id}
+      value={value}
+      onChange={onChange}
+      label={label}
+      sides={[
+        { name: `por ${other}`, money: true, suffix: `/ ${other}`, decimals: 0, fromStored: (v) => v * factor, toStored: (p) => p / factor },
+        { name: `por ${unit}`, money: true, suffix: `/ ${unit}`, decimals: 2, fromStored: same, toStored: same },
+      ]}
+    />
   );
 }
 

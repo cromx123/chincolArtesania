@@ -71,40 +71,87 @@ export function marginOf(price: number, i: PricingInput): number {
   return ((netFinal - r.cost - commission) / netFinal) * 100;
 }
 
-export interface EstimateRangeInput extends Omit<PricingInput, "materialsCost" | "hours"> {
-  /** Costo de materiales de la pieza base (receta actual). */
-  baseMaterialsCost: number;
-  /** Horas base de la pieza (Product.hours o un valor por defecto). */
-  baseHours: number;
-  /** Multiplicadores sobre materiales para reflejar la variación pedida, ej: [1, 1.3]. */
-  materialsFactorRange: [number, number];
-  /** Multiplicadores sobre horas para reflejar la variación pedida, ej: [1, 1.3]. */
-  hoursFactorRange: [number, number];
+/** Valor de la hora de trabajo del taller, en CLP. */
+export const HOUR_RATE = 1200;
+
+/** Una variación cuesta a lo más un 30% más que el precio normal de la pieza. */
+export const MAX_VARIATION_SURCHARGE = 0.3;
+
+/** Si la pieza no tiene materiales anotados, se asume que son esta parte de su precio. */
+export const NO_RECIPE_MATERIAL_SHARE = 0.3;
+
+export interface VariationInput {
+  /** Precio normal de la pieza en la tienda (sin promociones). */
+  basePrice: number;
+  /** Costo de materiales de una unidad según su receta; null si no tiene materiales anotados. */
+  materialsCost: number | null;
+  /** Horas que toma hacer una unidad. */
+  hours: number;
+  /** Cuánto más material usa la variación, en % (ej: 25 = un cuarto más). */
+  extraMaterialPct: number;
+  /** Cuánto más trabajo toma, en %. */
+  extraHoursPct: number;
+  settings: Pick<PricingInput, "wastePct" | "overheadPct" | "commissionPct" | "marginPct">;
 }
 
-export interface EstimateRange {
-  low: PricingResult;
-  high: PricingResult;
+export interface VariationQuote {
+  price: number;
+  basePrice: number;
+  materialsCost: number;
+  /** true si el costo de materiales se supuso (la pieza no tiene receta). */
+  estimatedMaterials: boolean;
+  extraMaterialPct: number;
+  extraHoursPct: number;
+  extraMaterials: number;
+  extraHours: number;
+  extraLabor: number;
+  hourRate: number;
+  /** Lo que se suma al precio normal. */
+  surcharge: number;
+  /** true si el recargo quedó limitado al 30%. */
+  capped: boolean;
 }
 
-/** Rango estimado para una variación de una pieza existente: corre computePrice en los dos extremos. */
-export function estimateRange(i: EstimateRangeInput): EstimateRange {
-  const { baseMaterialsCost, baseHours, materialsFactorRange, hoursFactorRange, ...rest } = i;
-  const low = computePrice({
-    ...rest,
-    materialsCost: baseMaterialsCost * materialsFactorRange[0],
-    hours: baseHours * hoursFactorRange[0],
-  });
-  const high = computePrice({
-    ...rest,
-    materialsCost: baseMaterialsCost * materialsFactorRange[1],
-    hours: baseHours * hoursFactorRange[1],
-  });
-  return { low, high };
+/**
+ * Precio de una variación: el precio normal de la pieza más lo que cuesta el material
+ * y el trabajo extra (a HOUR_RATE la hora), llevado a precio con la misma fórmula de la
+ * calculadora (gastos del taller, comisión y ganancia). El recargo se redondea a mil y
+ * nunca pasa del 30% del precio normal.
+ */
+export function quoteVariation(i: VariationInput): VariationQuote {
+  const extraMaterialPct = Math.max(0, i.extraMaterialPct);
+  const extraHoursPct = Math.max(0, i.extraHoursPct);
+  const estimatedMaterials = i.materialsCost === null;
+  const materialsCost = i.materialsCost ?? i.basePrice * NO_RECIPE_MATERIAL_SHARE;
+
+  const extraMaterials = (materialsCost * extraMaterialPct * (1 + i.settings.wastePct / 100)) / 100;
+  const extraHours = (i.hours * extraHoursPct) / 100;
+  const extraLabor = extraHours * HOUR_RATE;
+  const share = Math.min(0.95, (i.settings.commissionPct + i.settings.marginPct) / 100);
+  const raw = ((extraMaterials + extraLabor) * (1 + i.settings.overheadPct / 100)) / (1 - share);
+
+  const cap = Math.floor((i.basePrice * MAX_VARIATION_SURCHARGE) / 100) * 100;
+  const rounded = raw > 0 ? Math.ceil(raw / 1000) * 1000 : 0;
+  const surcharge = Math.min(rounded, cap);
+
+  return {
+    price: i.basePrice + surcharge,
+    basePrice: i.basePrice,
+    materialsCost: Math.round(materialsCost),
+    estimatedMaterials,
+    extraMaterialPct,
+    extraHoursPct,
+    extraMaterials: Math.round(extraMaterials),
+    extraHours,
+    extraLabor: Math.round(extraLabor),
+    hourRate: HOUR_RATE,
+    surcharge,
+    capped: rounded > cap,
+  };
 }
 
 export const DEFAULT_PRICING = {
-  hourRate: 6000,
+  hourRate: HOUR_RATE,
   wastePct: 10,
   overheadPct: 10,
   commissionPct: 0,

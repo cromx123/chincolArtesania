@@ -1,23 +1,38 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { channelLabel, lineTotal, paymentName } from "@/domain/sale";
 import { formatPrice } from "@/lib/format";
 import { dayLabel } from "@/lib/dates";
 import { saleService } from "@/server/services/sale-service";
+import { Notice } from "@/components/admin/Notice";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { SaleActions } from "@/components/admin/SaleActions";
+import { PencilIcon } from "@/components/icons";
 
 export const metadata: Metadata = { title: "Detalle de venta" };
 
-export default async function SaleDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const sale = await saleService.get((await params).id);
+type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ aviso?: string }> };
+
+export default async function SaleDetailPage({ params, searchParams }: Props) {
+  const [sale, { aviso }] = await Promise.all([params.then(({ id }) => saleService.get(id)), searchParams]);
   if (!sale) notFound();
 
   const time = new Intl.DateTimeFormat("es-CL", { timeZone: "America/Santiago", hour: "2-digit", minute: "2-digit" }).format(sale.soldAt);
 
   return (
     <div className="a-page a-page--narrow">
-      <PageHeader title="Detalle de venta" subtitle={`${dayLabel(sale.soldAt)}, ${time}`} back="/admin/ventas" />
+      <Notice message={aviso === "editada" ? "Cambios guardados. El stock quedó ajustado a la venta corregida." : null} />
+      <PageHeader
+        title="Detalle de venta"
+        subtitle={`${dayLabel(sale.soldAt)}, ${time}`}
+        back="/admin/ventas"
+        actions={
+          <Link href={`/admin/ventas/${sale.id}/editar`} className="a-btn a-btn--ghost">
+            <PencilIcon size={18} /> Editar
+          </Link>
+        }
+      />
 
       <section className="a-card">
         <ul className="a-receipt">

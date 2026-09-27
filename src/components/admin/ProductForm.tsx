@@ -11,7 +11,7 @@ import { deleteProductAction, saveProductAction } from "@/app/admin/_actions/pro
 import type { FieldErrors, ProductInput } from "@/server/services/product-admin-service";
 import { CalculatorIcon, PlusIcon, TrashIcon } from "../icons";
 import { ConfirmButton } from "./ConfirmButton";
-import { Choice, MoneyInput, QuantityInput, Stepper } from "./inputs";
+import { AreaInput, Choice, MoneyInput, QuantityInput, Stepper } from "./inputs";
 import { Notice } from "./Notice";
 import { PhotoManager } from "./PhotoManager";
 
@@ -160,7 +160,7 @@ export function ProductForm({ id, initial, materials }: Props) {
               const m = materials.find((x) => x.id === r.materialId);
               if (!m) return null;
               return (
-                <li key={r.materialId} className="a-recipe__row">
+                <li key={r.materialId} className={`a-recipe__row${m.unit === "pie2" ? " a-recipe__row--area" : ""}`}>
                   <select
                     className="a-input"
                     aria-label="Material"
@@ -178,13 +178,22 @@ export function ProductForm({ id, initial, materials }: Props) {
                       </option>
                     ))}
                   </select>
-                  <QuantityInput
-                    id={`cant-${r.materialId}`}
-                    aria-label={`Cantidad de ${m.name}`}
-                    value={r.quantity}
-                    suffix={unitShort(m.unit)}
-                    onChange={(v) => set("recipe", form.recipe.map((x, n) => (n === i ? { ...x, quantity: v } : x)))}
-                  />
+                  {m.unit === "pie2" ? (
+                    <AreaInput
+                      id={`cant-${r.materialId}`}
+                      label={`Cantidad de ${m.name}`}
+                      value={r.quantity}
+                      onChange={(v) => set("recipe", form.recipe.map((x, n) => (n === i ? { ...x, quantity: v } : x)))}
+                    />
+                  ) : (
+                    <QuantityInput
+                      id={`cant-${r.materialId}`}
+                      aria-label={`Cantidad de ${m.name}`}
+                      value={r.quantity}
+                      suffix={unitShort(m.unit)}
+                      onChange={(v) => set("recipe", form.recipe.map((x, n) => (n === i ? { ...x, quantity: v } : x)))}
+                    />
+                  )}
                   <span className="a-recipe__cost">{formatPrice(Math.round(r.quantity * m.unitCost))}</span>
                   <button
                     type="button"
@@ -198,6 +207,9 @@ export function ProductForm({ id, initial, materials }: Props) {
               );
             })}
           </ul>
+        )}
+        {recipeLines.some((l) => l.material.unit === "pie2") && (
+          <p className="a-hint">Para el cuero puedes escribir en pie² o en cm²: el otro se calcula solo. 1 pie² = 929 cm² (un cuadrado de 30,5 × 30,5 cm).</p>
         )}
         {errors.recipe && <p className="a-error">{errors.recipe}</p>}
 
