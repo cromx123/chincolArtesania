@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { formatDay } from "@/domain/event";
 import { availabilityLabel, categoryName, getAvailability } from "@/domain/product";
-import { formatPrice } from "@/lib/format";
 import { catalogService } from "@/server/container";
+import { Price } from "@/components/product/Price";
 import { ProductGallery } from "@/components/product/ProductGallery";
 import { ProductPurchase } from "@/components/product/ProductPurchase";
 import { ProductImage } from "@/components/ProductImage";
@@ -50,7 +51,14 @@ export default async function ProductPage({ params }: Props) {
           </div>
           <h1 className="product__name">{product.name}</h1>
           <p className="product__desc">{product.description}</p>
-          <div className="product__price">{formatPrice(product.price)}</div>
+          <div className="product__price">
+            <Price product={product} className="product__price-value" />
+          </div>
+          {product.offer && (
+            <p className="product__offer">
+              {product.offer.percent}% de descuento hasta el {formatDay(product.offer.until, false)}
+            </p>
+          )}
           <hr className="rule" />
 
           <ProductPurchase product={product} />
@@ -90,7 +98,7 @@ export default async function ProductPage({ params }: Props) {
                   </span>
                   <span className="related-card__body">
                     <span className="product-card__name">{p.name}</span>
-                    <span className="product-card__price">{formatPrice(p.price)}</span>
+                    <Price product={p} className="product-card__price" />
                   </span>
                 </Link>
               ))}

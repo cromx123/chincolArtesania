@@ -40,14 +40,24 @@ export interface ProductDetails {
   care?: string;
 }
 
+/** Descuento vigente de una pieza (viene de una campaña del newsletter). */
+export interface ProductOffer {
+  /** Precio con descuento, en CLP. */
+  price: number;
+  percent: number;
+  /** Último día de la oferta, "2026-10-04". */
+  until: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
   name: string;
   category: CategoryId;
   description: string;
-  /** Precio en pesos chilenos (CLP), sin decimales. */
+  /** Precio normal en pesos chilenos (CLP), sin decimales. Con oferta, lo que se cobra es `offer.price`. */
   price: number;
+  offer?: ProductOffer;
   /** Unidades terminadas en el taller. */
   stock: number;
   /** Se fabrica cuando alguien lo pide (no depende del stock). */
@@ -64,6 +74,18 @@ export interface Product {
 }
 
 export const LOW_STOCK_THRESHOLD = 2;
+
+export const MAX_DISCOUNT_PERCENT = 90;
+
+/** Precio con un porcentaje de descuento, redondeado al peso. */
+export function discountedPrice(price: number, percent: number): number {
+  return Math.round((price * (100 - percent)) / 100);
+}
+
+/** Lo que se cobra hoy: el precio de oferta si hay, si no el normal. */
+export function effectivePrice(p: Pick<Product, "price" | "offer">): number {
+  return p.offer?.price ?? p.price;
+}
 
 export type Availability = "in_stock" | "low_stock" | "made_to_order" | "out_of_stock";
 
@@ -94,8 +116,9 @@ export type BadgeTone = "dark" | "accent" | "muted";
 /** Etiqueta destacada de la tarjeta (una sola, por prioridad). */
 export function getBadge(p: Product): { label: string; tone: BadgeTone } | null {
   const availability = getAvailability(p);
-  if (availability === "low_stock") return { label: p.stock === 1 ? "Última unidad" : `Últimas ${p.stock}`, tone: "dark" };
   if (availability === "out_of_stock") return { label: "Agotado", tone: "muted" };
+  if (p.offer) return { label: `−${p.offer.percent}%`, tone: "accent" };
+  if (availability === "low_stock") return { label: p.stock === 1 ? "Última unidad" : `Últimas ${p.stock}`, tone: "dark" };
   if (p.customizable) return { label: "Personalizable", tone: "accent" };
   if (availability === "made_to_order") return { label: "Sobre pedido", tone: "muted" };
   return null;

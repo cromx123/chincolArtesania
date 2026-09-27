@@ -42,6 +42,7 @@ model Product {
   saleItems        SaleItem[]
   quoteRequests    QuoteRequest[]
   productionOrders ProductionOrder[]
+  campaignDiscounts CampaignDiscount[]
 }
 
 /// Materiales (insumos) del taller: cueros, hilos, herrajes, acabados.
@@ -161,6 +162,8 @@ model NewsletterSubscriber {
   unsubscribedAt DateTime?
   unsubscribeToken String? @unique @default(cuid())
   createdAt      DateTime @default(now())
+
+  deliveries NewsletterDelivery[]
 }
 
 /// Borradores y envíos programados del newsletter.
@@ -172,14 +175,57 @@ model NewsletterCampaign {
   promoText   String?
   ctaLabel    String?
   ctaUrl      String?
+  /// Fecha y hora del evento o promoción (contexto para el asistente que redacta).
+  eventAt     DateTime?
+  /// Lo que la dueña le pide al asistente para escribir el correo.
+  aiContext   String?
+  /// Días en que rigen los descuentos de la campaña en la tienda ("2026-10-04", inclusive).
+  promoFrom   String?
+  promoUntil  String?
   scheduledAt DateTime?
-  status      String   @default("borrador") // borrador | programada | enviada | error
+  status      String   @default("borrador") // borrador | programada | enviando | enviada | error
   sentAt      DateTime?
+  sentCount   Int      @default(0)
+  failedCount Int      @default(0)
   lastError   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  deliveries NewsletterDelivery[]
+  discounts  CampaignDiscount[]
+
   @@index([status, scheduledAt])
+}
+
+/// Descuento de una pieza dentro de una campaña. Rige en la tienda entre promoFrom y promoUntil
+/// de la campaña, solo cuando la campaña ya se programó o se envió (los borradores no cambian precios).
+model CampaignDiscount {
+  id         String             @id @default(cuid())
+  campaignId String
+  productId  String
+  /// Porcentaje de descuento (1 a 90).
+  percent    Int
+  createdAt  DateTime           @default(now())
+  campaign   NewsletterCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  product    Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, productId])
+  @@index([productId])
+}
+
+/// Un correo enviado (o fallido) de una campaña a un suscriptor. Evita enviar dos veces
+/// si el servidor se reinicia a mitad de un envío.
+model NewsletterDelivery {
+  id           String   @id @default(cuid())
+  campaignId   String
+  subscriberId String
+  status       String // enviado | error
+  error        String?
+  createdAt    DateTime @default(now())
+  campaign     NewsletterCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  subscriber   NewsletterSubscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, subscriberId])
 }
 
 /// Ferias y eventos del calendario. Fechas como "2026-10-04" (día en Chile, sin hora).

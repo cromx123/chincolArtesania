@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { discountedPrice } from "@/domain/product";
 import { todayISO } from "@/lib/dates";
 import { productAdminService } from "@/server/services/product-admin-service";
 import { customerService } from "@/server/services/customer-service";
+import { offerService } from "@/server/services/offer-service";
 import { saleService } from "@/server/services/sale-service";
 import { SaleForm, type SellableProduct } from "@/components/admin/SaleForm";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -9,14 +11,20 @@ import { PageHeader } from "@/components/admin/PageHeader";
 export const metadata: Metadata = { title: "Registrar venta" };
 
 export default async function NewSalePage() {
-  const [products, fairNames, customers] = await Promise.all([productAdminService.list(), saleService.recentFairNames(), customerService.pickList()]);
+  const [products, fairNames, customers, offers] = await Promise.all([
+    productAdminService.list(),
+    saleService.recentFairNames(),
+    customerService.pickList(),
+    offerService.activeByProduct(todayISO()),
+  ]);
   const sellable: SellableProduct[] = products
     .sort((a, b) => a.name.localeCompare(b.name, "es"))
     .map((p) => ({
       id: p.id,
       name: p.name,
       category: p.category,
-      price: p.price,
+      // Con una promo vigente se propone el precio con descuento (ella igual puede cambiarlo).
+      price: offers.has(p.id) ? discountedPrice(p.price, offers.get(p.id)!.percent) : p.price,
       stock: p.stock,
       madeToOrder: p.madeToOrder,
       image: p.images[0],

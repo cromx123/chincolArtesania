@@ -28,6 +28,33 @@ export function startOfDay(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00${offsetFor(guess)}`);
 }
 
+/**
+ * "2026-10-04T18:30" (lo que entrega un <input type="datetime-local">) leído como hora de Chile.
+ * El servidor corre en UTC, así que no sirve `new Date(valor)`. null si el texto no es válido.
+ */
+export function chileDateTime(local: string): Date | null {
+  const m = local.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const guess = new Date(`${m[1]}T12:00:00Z`);
+  const date = new Date(`${m[1]}T${m[2]}:${m[3]}:00${offsetFor(guess)}`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** Date → "2026-10-04T18:30" en hora de Chile, para rellenar un <input type="datetime-local">. */
+export function toChileLocalInput(date: Date): string {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", { timeZone: TIME_ZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+      .formatToParts(date)
+      .map((p) => [p.type, p.value]),
+  );
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+/** "sábado 4 de octubre, 18:30" en hora de Chile. */
+export function formatChileDateTime(date: Date): string {
+  return new Intl.DateTimeFormat("es-CL", { timeZone: TIME_ZONE, weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(date);
+}
+
 /** Mediodía de un día chileno: se usa al registrar ventas de otro día. */
 export function middayOf(isoDate: string): Date {
   const guess = new Date(`${isoDate}T12:00:00Z`);

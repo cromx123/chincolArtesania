@@ -1,5 +1,5 @@
 import "server-only";
-import { availabilityLabel, categoryName, type Product } from "@/domain/product";
+import { availabilityLabel, categoryName, effectivePrice, type Product } from "@/domain/product";
 import { parseFilters, filtersToQuery } from "@/domain/catalog-filters";
 import { catalogService } from "../container";
 
@@ -14,7 +14,8 @@ function toBotProduct(p: Product) {
     id: p.id,
     nombre: p.name,
     categoria: categoryName(p.category),
-    precio_clp: p.price,
+    precio_clp: effectivePrice(p),
+    ...(p.offer ? { oferta: { precio_normal_clp: p.price, descuento_pct: p.offer.percent, hasta: p.offer.until } } : {}),
     disponibilidad: availabilityLabel(p),
     personalizable: p.customizable,
     url: `/catalogo/${p.slug}`,

@@ -752,3 +752,71 @@ select.a-input { padding-right: 8px; }
 .a-rule-add { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
 @media (max-width: 599px) { .a-rule-add { grid-template-columns: 1fr 1fr; } .a-rule-add > :first-child, .a-rule-add > button { grid-column: 1 / -1; } }
 .a-stat--muted .a-stat__value { color: var(--muted); }
+
+/* ---------- Newsletter: la hoja del correo ---------- */
+.nl-sheet {
+  display: flex; flex-direction: column; background: #fffdf9;
+  border: 1px solid var(--a-line); border-top: 4px solid var(--accent); border-radius: var(--a-radius);
+  box-shadow: 0 1px 0 rgba(43, 32, 25, 0.04), 0 10px 30px rgba(43, 32, 25, 0.07);
+}
+.nl-sheet__head { display: flex; align-items: baseline; gap: 10px; padding: 18px 28px 14px; border-bottom: 1px dashed var(--a-line); }
+.nl-sheet__label { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.nl-sheet__subject { font-family: var(--font-display); font-size: 20px; font-weight: 600; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
+.nl-sheet__text {
+  display: block; width: 100%; min-height: 260px; margin: 0; padding: 22px 28px 26px; box-sizing: border-box;
+  font-family: Georgia, "Times New Roman", serif; font-size: 17px; line-height: 1.75; color: #2d231e;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.nl-sheet__editor { border: 0; background: transparent; resize: none; overflow: hidden; outline: none; }
+.nl-sheet__editor::placeholder { color: var(--muted); font-style: italic; }
+.nl-sheet__editor::selection { background: #f0d9c4; }
+.nl-sheet:focus-within { border-color: var(--line-2); }
+.nl-sheet__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 28px 14px; border-top: 1px solid var(--a-line-soft); }
+
+/* Cada palabra aparece como si se entintara en el papel. */
+.nl-word { display: inline; animation: nl-ink 0.42s ease-out both; }
+@keyframes nl-ink {
+  from { opacity: 0; filter: blur(3px); color: var(--accent); }
+  60% { opacity: 1; filter: blur(0); }
+  to { opacity: 1; filter: blur(0); color: inherit; }
+}
+.nl-caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -0.15em; background: var(--accent); animation: nl-blink 1s steps(1) infinite; }
+@keyframes nl-blink { 50% { opacity: 0; } }
+.nl-dim { color: var(--muted); opacity: 0.55; }
+.nl-fresh { background: #f6e7da; border-radius: 3px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+@media (prefers-reduced-motion: reduce) {
+  .nl-word { animation: none; }
+  .nl-caret { animation: none; }
+}
+
+.nl-discounts { display: flex; flex-direction: column; gap: 12px; padding: 16px; background: var(--a-bg); border: 1px dashed var(--line-2); border-radius: var(--a-radius); }
+.nl-discounts__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.nl-discounts__list li { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--a-line-soft); }
+.nl-discounts__list li:first-child { border-top: 0; }
+.nl-discounts__name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nl-discounts__now { color: var(--accent); }
+.nl-discounts__add { display: flex; gap: 8px; align-items: center; }
+.nl-discounts__add select { flex: 1; min-width: 0; }
+.nl-percent { display: inline-flex; align-items: center; gap: 4px; font-weight: 700; }
+.nl-percent .a-input { width: 64px; text-align: right; }
+@media (max-width: 599px) {
+  .nl-discounts__add { flex-wrap: wrap; }
+  .nl-discounts__add select { flex-basis: 100%; }
+}
+.nl-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.nl-ask { display: flex; gap: 8px; }
+.nl-ask .a-input { flex: 1; min-width: 0; }
+.nl-more summary { cursor: pointer; list-style: revert; }
+.nl-more[open] summary { margin-bottom: 14px; }
+.nl-more { display: flex; flex-direction: column; gap: 14px; }
+.nl-schedule { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.nl-schedule .a-input { flex: 1; min-width: 200px; }
+.nl-actions { flex-wrap: wrap; justify-content: flex-end; }
+.nl-actions > .a-muted { margin-right: auto; }
+.nl-actions .a-confirm { flex-basis: 100%; }
+@media (max-width: 599px) {
+  .nl-sheet__head, .nl-sheet__text, .nl-sheet__foot { padding-inline: 18px; }
+  .nl-sheet__text { font-size: 16px; }
+  .nl-ask { flex-direction: column; }
+  .nl-actions > .a-muted { flex-basis: 100%; }
+}

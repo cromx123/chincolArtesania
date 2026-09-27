@@ -1,7 +1,7 @@
 // Filtros del catálogo: se guardan en la URL (?categoria=bolsos&orden=precio-asc)
 // para que los links se puedan compartir y el bot pueda generar enlaces filtrados.
 
-import { type CategoryId, LEATHER_COLORS, type Product, isCategoryId } from "./product";
+import { type CategoryId, LEATHER_COLORS, type Product, effectivePrice, isCategoryId } from "./product";
 
 export const KINDS = [
   { id: "taller", name: "Hechas en el taller" },
@@ -101,8 +101,8 @@ export function applyFilters(products: Product[], f: CatalogFilters): Product[] 
   });
 
   return result.sort((a, b) => {
-    if (f.sort === "precio-asc") return a.price - b.price;
-    if (f.sort === "precio-desc") return b.price - a.price;
+    if (f.sort === "precio-asc") return effectivePrice(a) - effectivePrice(b);
+    if (f.sort === "precio-desc") return effectivePrice(b) - effectivePrice(a);
     return b.createdAt.localeCompare(a.createdAt);
   });
 }

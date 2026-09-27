@@ -662,6 +662,11 @@ legend { padding: 0; }
   * { transition: none !important; }
 }
 
+/* ---------- Precio en oferta ---------- */
+.price--offer .price__was { margin-right: 4px; font-size: 0.78em; font-weight: 400; color: var(--muted); }
+.price--offer .price__now { color: var(--accent); }
+.product__offer { margin: 6px 0 0; font-size: 14px; font-weight: 600; color: var(--accent); }
+
 /* ---------- Chat ---------- */
 .chat-widget {
   position: fixed;
