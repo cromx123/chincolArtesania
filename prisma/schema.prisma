@@ -53,7 +53,10 @@ model Material {
   unit      String // pie2 | m | u | l
   stock     Float    @default(0)
   minStock  Float    @default(0)
-  unitCost  Int      @default(0) // CLP por unidad
+  unitCost  Int      @default(0) // CLP por unidad, redondeado
+  /// Costo por unidad con decimales (ej. $0,55 por cm de hilo). Si falta, vale unitCost.
+  /// Es una columna aparte porque cambiar unitCost a decimal haría fallar el `db push` al arrancar.
+  unitCostDecimal Float?
   supplier  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

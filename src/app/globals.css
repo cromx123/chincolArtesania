@@ -307,8 +307,21 @@ legend { padding: 0; }
 /* ---------- Inicio ---------- */
 .hero { display: grid; grid-template-columns: minmax(0, 660fr) minmax(0, 780fr); min-height: 560px; max-width: var(--container); margin: 0 auto; }
 .hero__copy { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 24px; padding: 48px 56px 48px var(--gutter); }
-.hero__copy > :not(.hero__watermark) { position: relative; }
-.hero__watermark { position: absolute; right: -40px; bottom: -20px; color: #e4d7c3; pointer-events: none; }
+/* ---------- Animales de fondo (posiciones en src/components/PageAnimals.tsx) ---------- */
+/* La capa va dentro de cada sección: sobre su fondo, detrás del contenido y sin bloquear clics. */
+.has-animals { position: relative; }
+.has-animals > :not(.page-animals) { position: relative; z-index: 1; }
+.page-animals { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; color: #d9c6a9; }
+/* En secciones con .container la capa ocupa todo el ancho de la pantalla, no solo la columna. */
+.page-animals--full { left: calc(50% - 50vw); right: auto; width: 100vw; }
+.store { overflow-x: clip; }
+.commission .page-animals { color: #5a3f2f; }
+.page-animal {
+  position: absolute; display: block; background-color: currentColor;
+  top: var(--top, auto); right: var(--right, auto); bottom: var(--bottom, auto); left: var(--left, auto); width: var(--width);
+  transform: scaleX(var(--flip, 1));
+  -webkit-mask: var(--shape) center / contain no-repeat; mask: var(--shape) center / contain no-repeat;
+}
 .hero h1 { font-size: clamp(34px, 4.1vw, 58px); line-height: 1.05; }
 .hero p { font-size: 17px; line-height: 1.65; color: var(--ink-2); max-width: 480px; }
 .hero__actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
@@ -336,7 +349,6 @@ legend { padding: 0; }
 .value span { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
 
 .commission { position: relative; overflow: hidden; background: var(--leather); color: #f2e7d8; padding-block: 56px; scroll-margin-top: 100px; }
-.commission__watermark { position: absolute; right: -58px; bottom: -46px; color: #54392a; }
 .commission__inner { position: relative; display: flex; gap: 72px; align-items: center; }
 .commission__copy { width: 480px; flex-shrink: 0; display: flex; flex-direction: column; gap: 18px; align-items: flex-start; }
 .commission__eyebrow { color: var(--gold); font-size: 12px; letter-spacing: 0.22em; }
@@ -363,7 +375,13 @@ legend { padding: 0; }
   .hero { grid-template-columns: 1fr; min-height: 0; }
   .hero__media { display: block; min-height: 0; height: clamp(240px, 62vw, 380px); border-left: 0; border-bottom: 1px solid var(--line-3); }
   .hero__copy { background: var(--sand); border-bottom: 1px solid var(--line-3); padding: 32px var(--gutter) 24px; gap: 12px; min-height: 296px; justify-content: flex-end; overflow: hidden; }
-  .hero__watermark { width: 132px; height: 132px; top: 18px; right: 14px; bottom: auto; color: #cdb99f; }
+  /* En celular cada animal usa su posición "mobile" (ver PageAnimals.tsx). */
+  .page-animal {
+    top: var(--m-top, auto); right: var(--m-right, auto); bottom: var(--m-bottom, auto); left: var(--m-left, auto); width: var(--m-width);
+    transform: scaleX(var(--m-flip, 1));
+  }
+  .page-animal--desktop-only { display: none; }
+  .hero__copy .page-animals { color: #d6c3a7; }
   .hero .eyebrow { font-size: 11px; color: #7a5334; }
   .hero h1 { font-size: 34px; line-height: 1.08; }
   .hero p { font-size: 15px; line-height: 1.5; }

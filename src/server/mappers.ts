@@ -46,7 +46,7 @@ export function toMaterial(row: DbMaterial): Material {
     unit: (isMaterialUnit(row.unit) ? row.unit : "u") as MaterialUnit,
     stock: row.stock,
     minStock: row.minStock,
-    unitCost: row.unitCost,
+    unitCost: row.unitCostDecimal ?? row.unitCost,
     supplier: row.supplier,
   };
 }

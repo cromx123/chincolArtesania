@@ -2,8 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { instagramUrl, site, whatsappLink } from "@/config/site";
 import { catalogService } from "@/server/container";
+import { PageAnimals } from "@/components/PageAnimals";
 import { ProductGrid } from "@/components/ProductCard";
-import { ArrowRightIcon, BirdsOrnament, ChincolBird, InstagramIcon, PencilIcon, ShieldIcon, StarIcon } from "@/components/icons";
+import { ArrowRightIcon, BirdsOrnament, InstagramIcon, PencilIcon, ShieldIcon, StarIcon } from "@/components/icons";
 
 const STEPS = [
   { n: "01", title: "Envías la idea", text: "Foto de referencia, medidas y uso." },
@@ -18,8 +19,8 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero">
-        <div className="hero__copy">
-          <ChincolBird size={300} strokeWidth={1.1} withLegs className="hero__watermark" />
+        <div className="hero__copy has-animals">
+          <PageAnimals section="hero" />
           <span className="eyebrow eyebrow--accent">Taller de marroquinería</span>
           <h1>Cuero trabajado a mano, pieza por pieza.</h1>
           <p>Piezas del taller listas para enviar y encargos hechos a tu medida: elige el cuero, el hilo y el grabado.</p>
@@ -58,7 +59,8 @@ export default async function HomePage() {
           ))}
       </nav>
 
-      <section className="section container">
+      <section className="section container has-animals">
+        <PageAnimals section="piezas" full />
         <div className="section__head">
           <div>
             <span className="eyebrow eyebrow--accent eyebrow--birds">
@@ -73,7 +75,8 @@ export default async function HomePage() {
         <ProductGrid products={featured} variant="home" />
       </section>
 
-      <section className="values">
+      <section className="values has-animals">
+        <PageAnimals section="valores" />
         <div className="container values__inner">
           <div className="value">
             <StarIcon />
@@ -99,8 +102,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="encargos" className="commission">
-        <ChincolBird size={230} strokeWidth={1.2} withLegs className="commission__watermark" />
+      <section id="encargos" className="commission has-animals">
+        <PageAnimals section="encargos" />
         <div className="container commission__inner">
           <div className="commission__copy">
             <span className="eyebrow commission__eyebrow">Por encargo</span>
@@ -127,7 +130,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="taller" className="section container workshop">
+      <section id="taller" className="section container workshop has-animals">
+        <PageAnimals section="taller" full />
         <h2 className="section__title">El taller</h2>
         <p>
           {site.fullName} es un taller de marroquinería: cada pieza se corta, se cose y se termina a mano. Trabajamos piezas propias y

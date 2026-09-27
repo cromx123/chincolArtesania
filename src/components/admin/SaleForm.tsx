@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { formatPhone } from "@/domain/customer";
 import { CHANNELS, type Channel, PAYMENTS, type Payment, isChannel, isPayment, lineTotal, saleTotal } from "@/domain/sale";
 import type { CategoryId } from "@/domain/product";
 import { formatPrice } from "@/lib/format";
-import { deleteSaleAction, registerSaleAction } from "@/app/admin/_actions/sales";
+import { deleteSaleAction, registerSaleAction, updateSaleAction } from "@/app/admin/_actions/sales";
 import { CheckIcon, PlusIcon, SearchIcon, TrashIcon } from "../icons";
 import { Choice, MoneyInput, Stepper } from "./inputs";
 import { ProductThumb } from "./ProductThumb";
@@ -42,40 +43,59 @@ function normalize(t: string) {
 
 export type PickableCustomer = { id: string; name: string; phone: string };
 
+/** Datos de una venta ya registrada, para corregirla. */
+export interface EditableSale {
+  id: string;
+  channel: Channel;
+  fairName: string;
+  payment: Payment;
+  customer: string;
+  customerId: string | null;
+  /** Día de la venta, "2026-09-27". */
+  date: string;
+  discountStock: boolean;
+  lines: { productId: string; quantity: number; unitPrice: number; discount: number }[];
+}
+
 export function SaleForm({
   products,
   today,
   fairNames,
   customers = [],
+  editing,
 }: {
   products: SellableProduct[];
   today: string;
   fairNames: string[];
   customers?: PickableCustomer[];
+  /** Si viene, el formulario corrige esa venta en vez de registrar una nueva. */
+  editing?: EditableSale;
 }) {
-  const [channel, setChannel] = useState<Channel>("instagram");
-  const [fairName, setFairName] = useState("");
-  const [payment, setPayment] = useState<Payment>("transferencia");
-  const [lines, setLines] = useState<Line[]>([]);
-  const [customer, setCustomer] = useState("");
-  const [customerId, setCustomerId] = useState<string | null>(null);
-  const [otherDay, setOtherDay] = useState(false);
-  const [date, setDate] = useState(today);
-  const [discountStock, setDiscountStock] = useState(true);
+  const router = useRouter();
+  const [channel, setChannel] = useState<Channel>(editing?.channel ?? "instagram");
+  const [fairName, setFairName] = useState(editing?.fairName ?? "");
+  const [payment, setPayment] = useState<Payment>(editing?.payment ?? "transferencia");
+  const [lines, setLines] = useState<Line[]>(editing?.lines.map((l) => ({ ...l, editingTotal: false })) ?? []);
+  const [customer, setCustomer] = useState(editing?.customer ?? "");
+  const [customerId, setCustomerId] = useState<string | null>(editing?.customerId ?? null);
+  const [otherDay, setOtherDay] = useState(Boolean(editing));
+  const [date, setDate] = useState(editing?.date ?? today);
+  const [discountStock, setDiscountStock] = useState(editing?.discountStock ?? true);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<{ id: string; total: number } | null>(null);
   const [pending, start] = useTransition();
 
-  // Recuerda dónde y cómo vendió la última vez: casi siempre se repite.
+  // Recuerda dónde y cómo vendió la última vez: casi siempre se repite (no al corregir una venta).
   useEffect(() => {
+    if (editing) return;
     const p = loadPrefs();
     if (p.channel && isChannel(p.channel)) setChannel(p.channel);
     if (p.payment && isPayment(p.payment)) setPayment(p.payment);
     // La feria se recuerda solo el mismo día: en una feria se registran muchas ventas seguidas.
     if (p.fair?.date === today) setFairName(p.fair.name);
-  }, [today]);
+  }, [today, editing]);
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const total = saleTotal(lines);
@@ -123,17 +143,24 @@ export function SaleForm({
       document.getElementById("feria")?.focus();
       return;
     }
+    const input = {
+      channel,
+      fairName: channel === "feria" ? fairName : undefined,
+      payment,
+      customer,
+      customerId: customerId ?? undefined,
+      date: otherDay ? date : undefined,
+      discountStock,
+      lines: lines.map(({ productId, quantity, unitPrice, discount }) => ({ productId, quantity, unitPrice, discount })),
+    };
     start(async () => {
-      const result = await registerSaleAction({
-        channel,
-        fairName: channel === "feria" ? fairName : undefined,
-        payment,
-        customer,
-        customerId: customerId ?? undefined,
-        date: otherDay ? date : undefined,
-        discountStock,
-        lines: lines.map(({ productId, quantity, unitPrice, discount }) => ({ productId, quantity, unitPrice, discount })),
-      });
+      if (editing) {
+        const result = await updateSaleAction(editing.id, input);
+        if (!result.ok) setError(result.error);
+        else router.push(`/admin/ventas/${editing.id}?aviso=editada`);
+        return;
+      }
+      const result = await registerSaleAction(input);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -376,7 +403,11 @@ export function SaleForm({
         <input type="checkbox" checked={discountStock} onChange={(e) => setDiscountStock(e.target.checked)} />
         <span>
           <strong>Descontar del stock</strong>
-          <span className="a-muted">Resta las piezas vendidas (y los materiales si había que hacerlas).</span>
+          <span className="a-muted">
+            {editing
+              ? "Al guardar, lo que esta venta había descontado vuelve al stock y se descuenta de nuevo según los cambios."
+              : "Resta las piezas vendidas (y los materiales si había que hacerlas)."}
+          </span>
         </span>
       </label>
 
@@ -394,7 +425,7 @@ export function SaleForm({
           </p>
         )}
         <button type="button" className="a-btn a-btn--primary a-btn--lg a-btn--block" onClick={submit} disabled={pending}>
-          {pending ? "Guardando…" : "Registrar venta"}
+          {pending ? "Guardando…" : editing ? "Guardar cambios" : "Registrar venta"}
         </button>
       </div>
 

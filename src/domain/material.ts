@@ -12,6 +12,7 @@ export type MaterialKind = (typeof MATERIAL_KINDS)[number]["id"];
 export const MATERIAL_UNITS = [
   { id: "pie2", short: "pie²", long: "pies cuadrados" },
   { id: "m", short: "m", long: "metros" },
+  { id: "cm", short: "cm", long: "centímetros" },
   { id: "u", short: "u", long: "unidades" },
   { id: "l", short: "L", long: "litros" },
 ] as const;
@@ -58,6 +59,31 @@ export function isMaterialKind(v: string): v is MaterialKind {
 
 export function isMaterialUnit(v: string): v is MaterialUnit {
   return MATERIAL_UNITS.some((u) => u.id === v);
+}
+
+/** 1 yarda = 91,44 cm (el hilo se compra en yardas). */
+export const CM_PER_YARD = 91.44;
+
+/**
+ * Cuántas unidades del material hay en una yarda, si tiene sentido ingresarlo en yardas:
+ * solo hilos medidos en cm o en m. null en los demás casos.
+ */
+export function unitsPerYard(kind: MaterialKind | null, unit: MaterialUnit | null): number | null {
+  if (kind !== "hilo") return null;
+  if (unit === "cm") return CM_PER_YARD;
+  if (unit === "m") return CM_PER_YARD / 100;
+  return null;
+}
+
+/** 1 pie² = (30,48 cm)² = 929,0304 cm². */
+export const CM2_PER_PIE2 = 929.0304;
+
+export function pie2ToCm2(pie2: number): number {
+  return pie2 * CM2_PER_PIE2;
+}
+
+export function cm2ToPie2(cm2: number): number {
+  return cm2 / CM2_PER_PIE2;
 }
 
 /** 1.5 → "1,5"; 12 → "12". */

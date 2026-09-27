@@ -38,7 +38,8 @@ export default async function QuotesPage() {
                   {q.changes.length > 80 ? `${q.changes.slice(0, 80)}…` : q.changes}
                 </span>
                 <span className="a-row__meta">
-                  {formatPrice(q.estimateLow)}–{formatPrice(q.estimateHigh)} · {CHANNEL_NAME[q.channel] ?? q.channel} · {dayLabel(q.createdAt)}
+                  {q.estimateLow === q.estimateHigh ? formatPrice(q.estimateLow) : `${formatPrice(q.estimateLow)}–${formatPrice(q.estimateHigh)}`} ·{" "}
+                  {CHANNEL_NAME[q.channel] ?? q.channel} · {dayLabel(q.createdAt)}
                 </span>
               </span>
               <span className="a-row__end">
