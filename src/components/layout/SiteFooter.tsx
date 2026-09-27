@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { instagramUrl, site, whatsappLink } from "@/config/site";
 import { ChincolBird } from "../icons";
+import { FooterAnimals } from "./FooterAnimals";
 import { NewsletterForm } from "./NewsletterForm";
 
 export function SiteFooter() {
   const ig = instagramUrl();
   return (
-    <footer id="contacto" className="site-footer">
+    <footer id="contacto" className="site-footer has-animals">
+      <FooterAnimals />
       <div className="container site-footer__inner">
         <div className="site-footer__brand">
           <span className="site-footer__logo">

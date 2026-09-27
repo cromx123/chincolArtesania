@@ -316,6 +316,7 @@ legend { padding: 0; }
 .page-animals--full { left: calc(50% - 50vw); right: auto; width: 100vw; }
 .store { overflow-x: clip; }
 .commission .page-animals { color: #5a3f2f; }
+.site-footer .page-animals { color: #4a3a2f; }
 .page-animal {
   position: absolute; display: block; background-color: currentColor;
   top: var(--top, auto); right: var(--right, auto); bottom: var(--bottom, auto); left: var(--left, auto); width: var(--width);
@@ -630,6 +631,14 @@ legend { padding: 0; }
 .promo--applied .muted { font-size: 14px; }
 .promo__remove { border: 0; background: none; padding: 4px 0; font-size: 14px; font-weight: 600; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; flex-shrink: 0; }
 .promo__warn { margin: 0; font-size: 14px; color: var(--warm-ink) !important; }
+
+/* Generar cotización desde el carrito */
+.cart-quote { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); }
+.cart-quote p { margin: 0; font-size: 14px; line-height: 1.5; }
+.cart-quote__title { font-size: 15px; }
+.cart-quote__note { height: auto; padding-block: 10px; resize: vertical; font-family: inherit; }
+.cart-quote .promo__remove { align-self: center; }
+.cart-quote--sent { gap: 4px; font-size: 14px; line-height: 1.5; color: var(--ok-ink); background: var(--ok-bg); border-color: var(--ok-line); }
 
 @media (max-width: 1023px) {
   .cart { grid-template-columns: 1fr; }

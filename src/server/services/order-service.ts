@@ -6,7 +6,7 @@ import { db } from "../db";
 
 export type SaveOrderResult = { ok: true; id: string } | { ok: false; errors: OrderErrors };
 
-const include = { product: { select: { name: true } } } as const;
+const include = { product: { select: { name: true } }, quoteRequest: { select: { channel: true } } } as const;
 type OrderRow = Prisma.ProductionOrderGetPayload<{ include: typeof include }>;
 
 function toOrder(row: OrderRow): ProductionOrder {
@@ -23,6 +23,7 @@ function toOrder(row: OrderRow): ProductionOrder {
     dueDate: row.dueDate,
     note: row.note,
     quoteRequestId: row.quoteRequestId,
+    quoteChannel: row.quoteRequest?.channel ?? null,
   };
 }
 
@@ -54,10 +55,10 @@ export const orderService = {
     return rows.map(toOrder);
   },
 
-  /** Sin entregar y con fecha hasta `until` (incluye los atrasados). */
-  async dueSoon(until: string): Promise<ProductionOrder[]> {
+  /** Lo que falta hacer (por empezar o en progreso), lo más urgente primero. */
+  async toMake(): Promise<ProductionOrder[]> {
     const rows = await db.productionOrder.findMany({
-      where: { status: { not: "entregado" }, dueDate: { lte: until } },
+      where: { status: { in: ["por-empezar", "en-progreso"] } },
       include,
       orderBy: { dueDate: "asc" },
     });

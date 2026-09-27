@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hasActiveFilters, parseFilters } from "@/domain/catalog-filters";
 import { catalogService } from "@/server/container";
+import { PageAnimals } from "@/components/PageAnimals";
 import { ProductGrid } from "@/components/ProductCard";
 import { CatalogFilters } from "@/components/catalog/CatalogFilters";
 import { CatalogToolbar } from "@/components/catalog/CatalogToolbar";
@@ -14,9 +15,11 @@ export default async function CatalogPage({ searchParams }: Props) {
   const filters = parseFilters(await searchParams);
   const [products, categories] = await Promise.all([catalogService.search(filters), catalogService.categoriesWithCount()]);
   const total = categories.reduce((sum, c) => sum + c.count, 0);
+  const personalizados = filters.kinds.length === 1 && filters.kinds[0] === "personalizable";
 
   return (
-    <>
+    <div className="has-animals">
+      <PageAnimals section={personalizados ? "personalizados" : "catalogo"} />
       <div className="page-head">
         <div className="container">
           <nav aria-label="Ruta" className="breadcrumb">
@@ -48,6 +51,6 @@ export default async function CatalogPage({ searchParams }: Props) {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

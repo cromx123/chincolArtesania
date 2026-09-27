@@ -79,11 +79,11 @@ export default async function CalendarPage({ searchParams }: Props) {
       <Notice message={params.aviso ? (NOTICES[params.aviso] ?? null) : null} />
       <PageHeader
         title="Calendario"
-        subtitle="Ferias, eventos, postulaciones y entregas de encargos"
+        subtitle="Ferias, eventos, postulaciones y entregas de cotizaciones"
         actions={
           <>
-            <Link href={`/admin/encargos/nuevo${dateParam}`} className="a-btn a-btn--ghost">
-              <HammerIcon /> Encargo
+            <Link href={`/admin/cotizaciones/nueva${dateParam}`} className="a-btn a-btn--ghost">
+              <HammerIcon /> Cotización
             </Link>
             <Link href={`/admin/calendario/nuevo${dateParam}`} className="a-btn a-btn--primary">
               <PlusIcon /> Feria o evento
@@ -134,7 +134,7 @@ export default async function CalendarPage({ searchParams }: Props) {
                           {due.map((o) => (
                             <Link
                               key={`o-${o.id}`}
-                              href={`/admin/encargos/${o.id}`}
+                              href={`/admin/cotizaciones/pedido/${o.id}`}
                               className={orderChipClass(o, today)}
                               title={`Entrega: ${o.title} (${orderStatusName(o.status)})`}
                             >
@@ -174,10 +174,10 @@ export default async function CalendarPage({ searchParams }: Props) {
               <i className="a-cal__swatch a-cal__chip--deadline" /> Cierre de postulación
             </li>
             <li>
-              <i className="a-cal__swatch a-cal__chip--encargo" /> Entrega de encargo
+              <i className="a-cal__swatch a-cal__chip--encargo" /> Entrega de cotización
             </li>
             <li>
-              <i className="a-cal__swatch a-cal__chip--atrasado" /> Encargo atrasado
+              <i className="a-cal__swatch a-cal__chip--atrasado" /> Entrega atrasada
             </li>
           </ul>
         </div>
@@ -188,7 +188,7 @@ export default async function CalendarPage({ searchParams }: Props) {
           </h2>
           {items.length === 0 ? (
             <div className="a-empty">
-              <p>No tienes ferias, eventos ni entregas de encargos anotados en {monthName(month)}.</p>
+              <p>No tienes ferias, eventos ni entregas de cotizaciones anotadas en {monthName(month)}.</p>
               <Link href={`/admin/calendario/nuevo${dateParam}`} className="a-btn a-btn--primary">
                 Agregar una feria
               </Link>
@@ -199,7 +199,7 @@ export default async function CalendarPage({ searchParams }: Props) {
                 if (item.type === "encargo") {
                   const o = item.order;
                   return (
-                    <Link key={`encargo-${o.id}`} href={`/admin/encargos/${o.id}`} className={`a-row${o.status === "entregado" ? " is-past" : ""}`}>
+                    <Link key={`encargo-${o.id}`} href={`/admin/cotizaciones/pedido/${o.id}`} className={`a-row${o.status === "entregado" ? " is-past" : ""}`}>
                       <span className={`a-cal__date a-cal__date--encargo${isOverdue(o, today) ? " a-cal__date--late" : ""}`} aria-hidden>
                         <strong>{Number(item.date.slice(8))}</strong>
                         {shortWeekday(item.date)}

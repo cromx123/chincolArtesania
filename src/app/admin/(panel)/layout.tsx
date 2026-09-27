@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { site } from "@/config/site";
 import { requireAdmin } from "@/server/require-admin";
+import { quoteService } from "@/server/services/quote-service";
 import { AdminSidebarNav, AdminTabBar } from "@/components/admin/AdminNav";
 import { ChincolBird, LogoutIcon, StoreIcon } from "@/components/icons";
 import { logoutAction } from "../_actions/auth";
@@ -25,11 +26,12 @@ function Brand() {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   await requireAdmin();
+  const badges = { "/admin/cotizaciones": await quoteService.pendingCount() };
   return (
     <div className="a-app">
       <aside className="a-side">
         <Brand />
-        <AdminSidebarNav />
+        <AdminSidebarNav badges={badges} />
         <div className="a-side__foot">
           <Link href="/" className="a-side__link" target="_blank">
             <StoreIcon size={19} /> Ver mi tienda
@@ -57,7 +59,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </header>
 
       <main className="a-main">{children}</main>
-      <AdminTabBar />
+      <AdminTabBar badges={badges} />
     </div>
   );
 }

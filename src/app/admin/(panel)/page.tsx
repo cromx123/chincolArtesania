@@ -1,16 +1,26 @@
 import Link from "next/link";
 import { formatAmount } from "@/domain/material";
-import { orderStatusName } from "@/domain/production-order";
 import { formatPrice } from "@/lib/format";
 import { greeting, monthName } from "@/lib/dates";
 import { getDashboard } from "@/server/services/dashboard-service";
 import { SaleRow, saleTitle } from "@/components/admin/SaleRow";
 import { AlertIcon, ArrowRightIcon, BoxIcon, CalculatorIcon, CalendarIcon, CartIcon, ChatIcon, HammerIcon, PlusIcon, TagIcon } from "@/components/icons";
 
+/** Cuántas "por hacer" se listan en el inicio; el detalle está en el calendario. */
+const TO_MAKE_SHOWN = 5;
+
+function dueText(daysLeft: number): string {
+  if (daysLeft < 0) return `atrasada ${-daysLeft === 1 ? "1 día" : `${-daysLeft} días`}`;
+  if (daysLeft === 0) return "se entrega hoy";
+  if (daysLeft === 1) return "se entrega mañana";
+  return `se entrega en ${daysLeft} días`;
+}
+
 export default async function AdminHome() {
   const d = await getDashboard();
   const pendingTotal = d.pending.reduce((s, x) => s + x.total, 0);
-  const todo = d.lowProducts.length + d.lowMaterials.length + d.pending.length + d.closing.length + d.ordersDue.length;
+  const quotesTodo = d.toMake.length + (d.newQuotes > 0 ? 1 : 0);
+  const todo = d.lowProducts.length + d.lowMaterials.length + d.pending.length + d.closing.length + quotesTodo;
 
   return (
     <div className="a-page">
@@ -57,25 +67,45 @@ export default async function AdminHome() {
             "Todo en orden"
           )}
         </h2>
-        {todo === 0 && <p className="a-muted">No hay encargos por entregar, piezas por acabarse, materiales bajos, cobros pendientes ni postulaciones por cerrar.</p>}
-        <ul className="a-todo">
-          {d.ordersDue.map((o) => (
-            <li key={`encargo-${o.id}`}>
-              <Link href={`/admin/encargos/${o.id}`}>
-                <span className={`a-dot ${o.daysLeft <= 1 ? "a-dot--bad" : "a-dot--warn"}`} />
-                <span>
-                  {o.daysLeft < 0
-                    ? `Atrasado ${-o.daysLeft === 1 ? "1 día" : `${-o.daysLeft} días`}: ${o.title}`
-                    : o.daysLeft === 0
-                      ? `Hoy se entrega: ${o.title}`
-                      : o.daysLeft === 1
-                        ? `Mañana se entrega: ${o.title}`
-                        : `En ${o.daysLeft} días se entrega: ${o.title}`}{" "}
-                  <span className="a-muted">({orderStatusName(o.status).toLowerCase()})</span>
-                </span>
+        {todo === 0 && <p className="a-muted">No hay cotizaciones por hacer, piezas por acabarse, materiales bajos, cobros pendientes ni postulaciones por cerrar.</p>}
+
+        {quotesTodo > 0 && (
+          <div className="a-todo-group">
+            <div className="a-todo-group__head">
+              <h3>Cotizaciones por hacer</h3>
+              <Link href="/admin/cotizaciones" className="a-link">
+                Ver todas
               </Link>
-            </li>
-          ))}
+            </div>
+            <ul className="a-todo">
+              {d.newQuotes > 0 && (
+                <li>
+                  <Link href="/admin/cotizaciones">
+                    <span className="a-badge">{d.newQuotes}</span>
+                    <span>{d.newQuotes === 1 ? "1 cotización nueva por revisar" : `${d.newQuotes} cotizaciones nuevas por revisar`}</span>
+                  </Link>
+                </li>
+              )}
+              {d.toMake.slice(0, TO_MAKE_SHOWN).map((o) => (
+                <li key={o.id}>
+                  <Link href={`/admin/cotizaciones/pedido/${o.id}`}>
+                    <span className={`a-dot ${o.daysLeft <= 1 ? "a-dot--bad" : o.daysLeft <= 7 ? "a-dot--warn" : "a-dot--calm"}`} />
+                    <span>
+                      {o.title} <span className="a-muted">· {dueText(o.daysLeft)}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            {d.toMake.length > TO_MAKE_SHOWN && (
+              <p className="a-hint">
+                Y {d.toMake.length - TO_MAKE_SHOWN} más: míralas en el <Link href="/admin/calendario" className="a-link">calendario</Link>.
+              </p>
+            )}
+          </div>
+        )}
+
+        <ul className="a-todo">
           {d.closing.map((e) => (
             <li key={`feria-${e.id}`}>
               <Link href={`/admin/calendario/${e.id}`}>
@@ -153,8 +183,8 @@ export default async function AdminHome() {
         <Link href="/admin/calendario" className="a-shortcut">
           <CalendarIcon /> Calendario de ferias
         </Link>
-        <Link href="/admin/encargos/nuevo" className="a-shortcut">
-          <HammerIcon /> Anotar un encargo
+        <Link href="/admin/cotizaciones/nueva" className="a-shortcut">
+          <HammerIcon /> Anotar una cotización
         </Link>
         <Link href="/admin/asistencia" className="a-shortcut">
           <ChatIcon /> Ayuda para escribir (publicaciones, ferias)

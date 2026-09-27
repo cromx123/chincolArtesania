@@ -6,6 +6,7 @@ import { eventService } from "./event-service";
 import { materialService } from "./material-service";
 import { orderService } from "./order-service";
 import { productAdminService } from "./product-admin-service";
+import { quoteService } from "./quote-service";
 import { saleService } from "./sale-service";
 
 /** Lo que ve al entrar: cuánto vendió y qué necesita atención. */
@@ -13,14 +14,15 @@ export async function getDashboard() {
   const month = currentMonth();
   const today = todayISO();
   const inAWeek = todayISO(new Date(Date.now() + 7 * 86_400_000));
-  const [sales, pending, products, materials, recent, closing, ordersDue] = await Promise.all([
+  const [sales, pending, products, materials, recent, closing, toMake, newQuotes] = await Promise.all([
     saleService.byMonth(month),
     saleService.pending(),
     productAdminService.list(),
     materialService.list(),
     saleService.recent(4),
     eventService.closingSoon(today, inAWeek),
-    orderService.dueSoon(inAWeek),
+    orderService.toMake(),
+    quoteService.pendingCount(),
   ]);
 
   const lowProducts = products.filter((p) => p.published && !p.madeToOrder && p.stock <= p.lowStockAlert);
@@ -36,6 +38,9 @@ export async function getDashboard() {
     lowMaterials,
     recent,
     closing: closing.map((e) => ({ id: e.id, name: e.name, daysLeft: daysBetween(today, e.applyBy!) })),
-    ordersDue: ordersDue.map((o) => ({ id: o.id, title: o.title, status: o.status, daysLeft: daysBetween(today, o.dueDate) })),
+    /** Cotizaciones agendadas que falta hacer (por empezar o en progreso), la más urgente primero. */
+    toMake: toMake.map((o) => ({ id: o.id, title: o.title, status: o.status, daysLeft: daysBetween(today, o.dueDate) })),
+    /** Cotizaciones nuevas del chat o del carrito sin revisar. */
+    newQuotes,
   };
 }

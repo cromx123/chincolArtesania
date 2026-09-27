@@ -22,6 +22,8 @@ export interface ProductionOrder {
   dueDate: string;
   note: string | null;
   quoteRequestId: string | null;
+  /** Canal de la cotización de origen (chat, carrito…); null si la dueña la creó a mano. */
+  quoteChannel: string | null;
 }
 
 export interface OrderInput {

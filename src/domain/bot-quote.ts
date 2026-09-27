@@ -25,15 +25,41 @@ export function quoteStatusName(id: string): string {
   return QUOTE_STATUSES.find((s) => s.id === id)?.name ?? id;
 }
 
+const QUOTE_CHANNELS: Record<string, string> = { web: "Chat web", whatsapp: "WhatsApp", instagram: "Instagram", carrito: "Carrito web" };
+
+/** De dónde llegó la cotización: el chat (web, WhatsApp, Instagram) o el botón del carrito. */
+export function quoteChannelName(channel: string): string {
+  return QUOTE_CHANNELS[channel] ?? channel;
+}
+
+/** Una línea de una cotización pedida desde el carrito. */
+export interface CartQuoteLine {
+  productId: string;
+  nombre: string;
+  /** Opciones elegidas, ej: "Cuero caramelo · hilo natural". */
+  opciones: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
+}
+
 /** Cómo se llegó al precio (se guarda como JSON en QuoteRequest.estimateDetail). */
 export type QuoteDetail =
   | { tipo: "catalogo"; precio: number; precioNormal: number; disponibilidad: string }
-  | ({ tipo: "variacion" } & VariationQuote);
+  | ({ tipo: "variacion" } & VariationQuote)
+  | { tipo: "carrito"; lineas: CartQuoteLine[]; subtotal: number; descuento: { label: string; amount: number } | null; total: number };
+
+/** El precio final que vio el cliente, según el tipo de cotización. */
+export function quotePrice(detail: QuoteDetail): number {
+  if (detail.tipo === "catalogo") return detail.precio;
+  if (detail.tipo === "variacion") return detail.price;
+  return detail.total;
+}
 
 export function parseQuoteDetail(json: string): QuoteDetail | null {
   try {
     const value = JSON.parse(json);
-    return value?.tipo === "catalogo" || value?.tipo === "variacion" ? (value as QuoteDetail) : null;
+    return value?.tipo === "catalogo" || value?.tipo === "variacion" || value?.tipo === "carrito" ? (value as QuoteDetail) : null;
   } catch {
     return null;
   }

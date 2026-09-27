@@ -188,6 +188,16 @@ export const CalendarIcon = ({ size = 20, className }: IconProps) => (
   </svg>
 );
 
+/** Periódico: hoja con titular, columna de texto y una doblez al costado. */
+export const NewspaperIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...stroke(size, className)}>
+    <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h10A1.5 1.5 0 0 1 17 5.5V18a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2z" />
+    <path d="M17 8.5h2.5a.5.5 0 0 1 .5.5v9a2 2 0 0 1-2 2" />
+    <path d="M7.5 8h6M7.5 11.5h2.5M7.5 15h6" />
+    <rect x="11.5" y="11" width="2" height="1.5" rx=".3" />
+  </svg>
+);
+
 export const PercentIcon = ({ size = 20, className }: IconProps) => (
   <svg {...stroke(size, className)}>
     <path d="M19 5 5 19" />
